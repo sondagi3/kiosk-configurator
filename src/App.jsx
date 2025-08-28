@@ -13,6 +13,8 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
+// API base for the Express server
+const API_BASE = "http://localhost:3001/api";
 
 // Brand M3dia – One‑Stop Kiosk Configurator (Plain JS)
 // CEO Mode + Admin Mode (full spec editor), live compliance, export/print
@@ -43,7 +45,7 @@ export default function App() {
     },
     touch: {
       allowed: true,
-      structures: ["G+G"],
+      structures: ["G+G", "G+F"],
       tech: ["PCAP"],
       minPoints: 10,
       sensorTypes: ["ITO", "Nanowire"],
@@ -222,6 +224,13 @@ export default function App() {
   const [summary, setSummary] = useState("");
   const [importText, setImportText] = useState("");
 
+  // API & pricing state
+const [apiHealth, setApiHealth] = useState(null);
+const [pricing, setPricing] = useState(null);
+const [quoteResp, setQuoteResp] = useState(null);
+const [cfgId, setCfgId] = useState(""); // paste a real configuration UUID when you have one
+const [apiError, setApiError] = useState(null);
+
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   // ======================= Inputs =======================
@@ -356,6 +365,7 @@ export default function App() {
 
   // ======================= Summary / Export / Print =======================
   const generateSummary = () => {
+   
     const A = admin, f = form;
     const lines = [];
     lines.push(`${A.orgName} – Kiosk Configuration Summary\n`);
@@ -438,6 +448,82 @@ export default function App() {
 
     return lines.join("\n");
   };
+
+  // Map the current form into a selection_json the server understands.
+// These SKUs match the demo SQL seed: DISP-24-TOUCH, PC-NUC-I5, TOUCH-KIT-PCAP
+function buildSelectionJson() {
+  // display SKU — simple demo mapping based on size text
+  const size = String(form.size || "").toLowerCase();
+  let displaySku = "DISP-24-TOUCH";
+  if (size.includes("32")) displaySku = "DISP-24-TOUCH";
+  if (size.includes("43")) displaySku = "DISP-24-TOUCH";
+  if (size.includes("49")) displaySku = "DISP-24-TOUCH";
+  if (size.includes("55")) displaySku = "DISP-24-TOUCH";
+
+  // pc SKU — demo default maps any i5 option to PC-NUC-I5
+  const pcSku = form.cpuRam.includes("i5") ? "PC-NUC-I5" : "PC-NUC-I5";
+
+  // touch SKU only if user selected touch
+  const touchSku = form.hasTouch === "Yes" ? "TOUCH-KIT-PCAP" : null;
+
+  const selection = {
+    kioskColor: form.kioskColor,
+    display: { sku: displaySku, size: form.size, resolution: form.resolution },
+    pc: { sku: pcSku, cpuRam: form.cpuRam, storage: form.storage },
+  };
+  if (touchSku) selection.touch = { sku: touchSku, tech: form.touchTech };
+
+  return selection;
+}
+
+async function checkHealth() {
+  setApiError(null); setApiHealth(null);
+  try {
+    const r = await fetch(`${API_BASE}/health`);
+    const j = await r.json();
+    setApiHealth(j);
+  } catch (e) {
+    setApiError(`Health failed: ${e.message}`);
+  }
+}
+
+async function handleCalculatePrice() {
+  setIsSubmitting(true); setApiError(null); setPricing(null);
+  try {
+    const selection_json = buildSelectionJson();
+    const r = await fetch(`${API_BASE}/calculate-price`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ selection_json }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    setPricing(j);
+  } catch (e) {
+    setApiError(`Calculate failed: ${e.message}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+}
+
+async function handleCreateQuote() {
+  setIsSubmitting(true); setApiError(null); setQuoteResp(null);
+  try {
+    if (!cfgId.trim()) throw new Error("Enter a configurationId (UUID)");
+    const r = await fetch(`${API_BASE}/quotes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ configurationId: cfgId.trim() }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    setQuoteResp(j);
+  } catch (e) {
+    setApiError(`Create quote failed: ${e.message}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+}
 
   const exportConfig = () => {
     const payload = { type: "config", admin, form };
@@ -870,6 +956,105 @@ export default function App() {
           </div>
 
           {/* Actions */}
+          {/* ===== API Integration: Health / Calculate / Quote ===== */}
+<div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 shadow-inner">
+  <h2 className="mb-3 text-lg font-semibold">API Integration</h2>
+
+  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+    {/* Health */}
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={checkHealth}
+        className="w-full rounded-lg border px-3 py-2"
+      >
+        Ping /api/health
+      </button>
+      {apiHealth && (
+        <pre className="max-h-40 overflow-auto rounded bg-white p-2 text-xs">
+          {JSON.stringify(apiHealth, null, 2)}
+        </pre>
+      )}
+    </div>
+
+    {/* Calculate Price */}
+    <div className="space-y-2">
+      <button
+        type="button"
+        disabled={isSubmitting}
+        onClick={handleCalculatePrice}
+        className="w-full rounded-lg bg-blue-600 px-3 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-70"
+      >
+        {isSubmitting ? "Calculating…" : "Calculate Price"}
+      </button>
+      {pricing && (
+        <div className="rounded-lg bg-white p-2">
+          <div className="text-sm"><strong>Subtotal:</strong> {pricing.subtotal}</div>
+          {"shipping_total" in pricing && (
+            <div className="text-sm"><strong>Shipping:</strong> {pricing.shipping_total}</div>
+          )}
+          {"tax_total" in pricing && (
+            <div className="text-sm"><strong>Tax:</strong> {pricing.tax_total}</div>
+          )}
+          <div className="text-sm"><strong>Grand Total:</strong> {pricing.grand_total ?? pricing.subtotal}</div>
+          {Array.isArray(pricing.lines) && pricing.lines.length > 0 && (
+            <table className="mt-2 w-full border-collapse text-xs">
+              <thead>
+                <tr className="text-left">
+                  <th>SKU</th><th>Description</th><th>Qty</th><th>Unit Cost</th><th>Unit Price</th><th>Line Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pricing.lines.map((l) => (
+                  <tr key={l.component_id}>
+                    <td>{l.sku}</td>
+                    <td>{l.description}</td>
+                    <td>{l.qty}</td>
+                    <td>{l.unit_cost}</td>
+                    <td>{l.unit_price}</td>
+                    <td>{l.line_total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+    </div>
+
+    {/* Create Quote */}
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <input
+          value={cfgId}
+          onChange={(e) => setCfgId(e.target.value)}
+          placeholder="configurationId (UUID)"
+          className="flex-1 rounded border px-3 py-2 text-sm"
+        />
+        <button
+          type="button"
+          disabled={isSubmitting}
+          onClick={handleCreateQuote}
+          className="rounded-lg border px-3 py-2 text-sm"
+        >
+          {isSubmitting ? "Creating…" : "Create Quote"}
+        </button>
+      </div>
+      {quoteResp && (
+        <pre className="max-h-40 overflow-auto rounded bg-white p-2 text-xs">
+          {JSON.stringify(quoteResp, null, 2)}
+        </pre>
+      )}
+    </div>
+  </div>
+
+  {apiError && (
+    <div className="mt-3 rounded border border-red-200 bg-red-50 p-2 text-sm text-red-800">
+      {apiError}
+    </div>
+  )}
+</div>
+
           <div className="flex flex-col items-stretch justify-between gap-3 md:flex-row">
             <button type="button" onClick={resetAll} className="inline-flex items-center justify-center rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
               <X className="mr-2 h-4 w-4" /> Reset
