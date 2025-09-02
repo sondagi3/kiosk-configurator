@@ -1,9 +1,3 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/src/App.jsx b/src/App.jsx
-index 79876ee60a9db3b6533382cd7282dd02ab2d8ebb..0ebaa6142c6f5dd3c7b604e02a438cac0e75b316 100644
---- a/src/App.jsx
-+++ b/src/App.jsx
-@@ -1,39 +1,40 @@
  import React, { useMemo, useState } from "react";
  import {
    Monitor,
