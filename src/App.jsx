@@ -1,6 +1,13 @@
 // src/App.jsx
-import React, { useEffect, useMemo, useState } from "react";
-import { Download, FileDown, LogOut } from "lucide-react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
+import {
+  Download,
+  FileDown,
+  LogOut,
+  Settings,
+  MoreVertical,
+} from "lucide-react";
+
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import DebugLog from "./components/DebugLog.jsx";
 import ClientIntake from "./components/ClientIntake.jsx";
@@ -10,11 +17,13 @@ import VendorFulfillment from "./components/VendorFulfillment.jsx";
 import PaymentRecord from "./components/PaymentRecord.jsx";
 import AuditTrail from "./components/AuditTrail.jsx";
 import StatusRibbon from "./components/StatusRibbon.jsx";
+
 import { DEFAULT_ADMIN, defaultSpecFromAdmin } from "./lib/admin.js";
 import { nowISO, uuid } from "./lib/utils.js";
 import { initGlobalErrorHandlers, logInfo } from "./lib/log.js";
 import { normalizeOrderShape } from "./lib/normalize.js";
 
+// -------------------- LocalStorage helpers --------------------
 const LS_ADMIN = "bm3_admin_spec";
 const LS_ORDER_LATEST = "bm3_order_latest";
 
@@ -41,6 +50,96 @@ function saveOrder(order) {
   lsSet(LS_ORDER_LATEST, order.orderId);
 }
 
+// -------------------- Small helpers --------------------
+function useClickAway(ref, onAway) {
+  useEffect(() => {
+    function handler(e) {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target)) onAway?.();
+    }
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, [ref, onAway]);
+}
+
+// -------------------- Admin Modal --------------------
+function AdminModal({ open, onClose, admin, setAdmin }) {
+  const r = useRef(null);
+  useClickAway(r, onClose);
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+      <div ref={r} className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-xl">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Settings className="h-5 w-5 text-gray-800" />
+            <h2 className="text-lg font-semibold">Admin Settings</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-md px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="grid gap-3">
+          <label className="text-sm font-medium text-gray-700">
+            Organization Name
+            <input
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              value={admin.orgName || ""}
+              onChange={(e) => setAdmin((a) => ({ ...a, orgName: e.target.value }))}
+              placeholder="Brand M3dia"
+            />
+          </label>
+
+          <label className="text-sm font-medium text-gray-700">
+            Logo URL (optional)
+            <input
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              value={admin.logoUrl || ""}
+              onChange={(e) => setAdmin((a) => ({ ...a, logoUrl: e.target.value }))}
+              placeholder="/brand-logo.png"
+            />
+            <div className="mt-1 text-xs text-gray-500">
+              Tip: leave blank to use <code>/brand-logo.png</code>. Put your PNG in <code>public/</code>.
+            </div>
+          </label>
+
+          <div className="flex items-center gap-3">
+            <img
+              src={admin?.logoUrl || "/brand-logo.png"}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/brand-logo.png";
+              }}
+              alt={admin.orgName || "Brand M3dia"}
+              className="h-10 w-auto rounded bg-white"
+            />
+            <div className="text-xs text-gray-600">Preview</div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-lg border px-3 py-2 text-sm"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------------------- App --------------------
 export default function App() {
   useEffect(() => {
     initGlobalErrorHandlers();
@@ -64,11 +163,15 @@ export default function App() {
   });
 
   const [showDebug, setShowDebug] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  useClickAway(menuRef, () => setMenuOpen(false));
 
   useEffect(() => { lsSet(LS_ADMIN, admin); }, [admin]);
   useEffect(() => { saveOrder(order); }, [order]);
 
-  // Safe logo path with fallback
+  // Safe logo path
   let defaultLogo = "/brand-logo.png";
   try {
     defaultLogo = new URL("/brand-logo.png", import.meta.url).pathname;
@@ -151,8 +254,10 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      {/* Header */}
       <header className="sticky top-0 z-20 border-b bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+          {/* Left: logo + stacked title */}
           <div className="flex items-center gap-3">
             <img
               src={headerLogo}
@@ -160,51 +265,87 @@ export default function App() {
               alt={admin.orgName || "Brand M3dia"}
               className="h-8 w-auto"
             />
-            <h1 className="text-2xl font-bold text-gray-900">
-              {admin.orgName || "Brand M3dia"} — Kiosk Orders
-            </h1>
+            <div className="leading-tight">
+  <div className="text-xl font-semibold text-gray-900">Kiosk Orders</div>
+</div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+
+          {/* Right: Admin button + kebab menu */}
+          <div className="flex items-center gap-2">
             <button
-              onClick={exportOrder}
-              className="inline-flex items-center gap-2 rounded-lg border border-red-600 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+              onClick={() => setShowAdmin(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100"
+              title="Admin Settings"
             >
-              <Download className="h-4 w-4" /> Export Order
+              <Settings className="h-4 w-4" />
+              Admin
             </button>
-            <button
-              onClick={importOrder}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium"
-            >
-              <FileDown className="h-4 w-4" /> Import Order
-            </button>
-            <button
-              onClick={() => setShowDebug(true)}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium"
-            >
-              Debug Log
-            </button>
-            <button
-              onClick={startNewOrder}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium"
-              title="Start a fresh order"
-            >
-              New Order
-            </button>
-            <button
-              onClick={factoryReset}
-              className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
-              title="Clear all data and reload"
-            >
-              <LogOut className="h-4 w-4" /> Factory Reset
-            </button>
+
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="inline-flex items-center justify-center rounded-lg border border-gray-300 p-2 hover:bg-gray-100"
+                title="More actions"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
+                >
+                  <button
+                    onClick={() => { setMenuOpen(false); exportOrder(); }}
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  >
+                    <Download className="h-4 w-4" /> Export Order
+                  </button>
+                  <button
+                    onClick={() => { setMenuOpen(false); importOrder(); }}
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  >
+                    <FileDown className="h-4 w-4" /> Import Order
+                  </button>
+                  <button
+                    onClick={() => { setMenuOpen(false); setShowDebug(true); }}
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  >
+                    Debug Log
+                  </button>
+                  <button
+                    onClick={() => { setMenuOpen(false); startNewOrder(); }}
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  >
+                    New Order
+                  </button>
+                  <div className="my-1 h-px bg-gray-100" />
+                  <button
+                    onClick={() => { setMenuOpen(false); factoryReset(); }}
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4" /> Factory Reset
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
+      {/* Status ribbon */}
       <div className="mx-auto mt-3 max-w-6xl px-4">
         <StatusRibbon order={order} />
       </div>
 
+      {/* Main content */}
       <main className="mx-auto my-4 grid max-w-6xl gap-4 px-4">
         <ClientIntake order={order} setOrder={setOrder} pastClients={pastClients} />
         <SpecForm order={order} setOrder={setOrder} admin={admin} />
@@ -214,6 +355,8 @@ export default function App() {
         <AuditTrail order={order} />
       </main>
 
+      {/* Modals */}
+      <AdminModal open={showAdmin} onClose={() => setShowAdmin(false)} admin={admin} setAdmin={setAdmin} />
       <DebugLog open={showDebug} onClose={() => setShowDebug(false)} />
     </ErrorBoundary>
   );
