@@ -12,6 +12,7 @@ import {
   Settings,
   Plus,
   Trash2,
+  CreditCard,
 } from "lucide-react";
 // API base for the Express server
 const API_BASE = "http://localhost:3001/api";
@@ -214,6 +215,14 @@ export default function App() {
     peripherals: ["mic", "speaker", "webcam", "qr"],
   };
 
+  const initialPayment = {
+    method: "Credit Card",
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
+    poNumber: "",
+  };
+
   const [form, setForm] = useState(initial);
 
   // ======================= UI State =======================
@@ -224,6 +233,9 @@ export default function App() {
   const [summary, setSummary] = useState("");
   const [importText, setImportText] = useState("");
 
+  // Payment details
+  const [payment, setPayment] = useState(initialPayment);
+
   // API & pricing state
 const [apiHealth, setApiHealth] = useState(null);
 const [pricing, setPricing] = useState(null);
@@ -232,6 +244,7 @@ const [cfgId, setCfgId] = useState(""); // paste a real configuration UUID when 
 const [apiError, setApiError] = useState(null);
 
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const updatePayment = (k, v) => setPayment((p) => ({ ...p, [k]: v }));
 
   // ======================= Inputs =======================
   const Select = ({ value, onChange, options }) => (
@@ -440,6 +453,23 @@ const [apiError, setApiError] = useState(null);
       });
     }
 
+    // Payment
+    lines.push("\nPayment:");
+    lines.push(`• Method: ${payment.method}`);
+    if (payment.method === "Credit Card") {
+      const last4 = payment.cardNumber ? payment.cardNumber.slice(-4) : "----";
+      lines.push(`• Card Ending: ${last4}`);
+    } else if (payment.method === "Purchase Order") {
+      lines.push(`• PO Number: ${payment.poNumber || "(none)"}`);
+    }
+    if (pricing) {
+      lines.push("\nPricing:");
+      lines.push(`• Subtotal: ${pricing.subtotal}`);
+      if ("shipping_total" in pricing) lines.push(`• Shipping: ${pricing.shipping_total}`);
+      if ("tax_total" in pricing) lines.push(`• Tax: ${pricing.tax_total}`);
+      lines.push(`• Grand Total: ${pricing.grand_total ?? pricing.subtotal}`);
+    }
+
     // Warnings
     if (warnings.length) {
       lines.push("\nCompliance Warnings:");
@@ -526,7 +556,7 @@ async function handleCreateQuote() {
 }
 
   const exportConfig = () => {
-    const payload = { type: "config", admin, form };
+    const payload = { type: "config", admin, form, payment };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -552,6 +582,7 @@ async function handleCreateQuote() {
       if (parsed.type === "config" && parsed.form && parsed.admin) {
         setAdmin(parsed.admin);
         setForm(parsed.form);
+        if (parsed.payment) setPayment(parsed.payment);
       }
       alert("Imported successfully.");
     } catch (e) {
@@ -580,7 +611,10 @@ async function handleCreateQuote() {
     }
   };
 
-  const resetAll = () => setForm({ ...initial });
+  const resetAll = () => {
+    setForm({ ...initial });
+    setPayment({ ...initialPayment });
+  };
 
   // ======================= Admin Panel Components =======================
   const Chip = ({ text, onRemove }) => (
@@ -935,6 +969,51 @@ async function handleCreateQuote() {
               ))}
             </Section>
           ) : null}
+
+          {/* Payment */}
+          <Section title="Payment" icon={<CreditCard className="h-6 w-6 text-gray-800" />}>
+            <Field label="Method">
+              <Select
+                value={payment.method}
+                onChange={(v) => updatePayment("method", v)}
+                options={["Credit Card", "Purchase Order"]}
+              />
+            </Field>
+            {payment.method === "Credit Card" && (
+              <>
+                <Field label="Card Number">
+                  <Text
+                    value={payment.cardNumber}
+                    onChange={(v) => updatePayment("cardNumber", v)}
+                    placeholder="4111 1111 1111 1111"
+                  />
+                </Field>
+                <Field label="Expiry">
+                  <Text
+                    value={payment.expiry}
+                    onChange={(v) => updatePayment("expiry", v)}
+                    placeholder="MM/YY"
+                  />
+                </Field>
+                <Field label="CVV">
+                  <Text
+                    value={payment.cvv}
+                    onChange={(v) => updatePayment("cvv", v)}
+                    placeholder="123"
+                  />
+                </Field>
+              </>
+            )}
+            {payment.method === "Purchase Order" && (
+              <Field label="PO Number">
+                <Text
+                  value={payment.poNumber}
+                  onChange={(v) => updatePayment("poNumber", v)}
+                  placeholder="PO-12345"
+                />
+              </Field>
+            )}
+          </Section>
 
           {/* Live Summary + Warnings */}
           <div className="space-y-3">
