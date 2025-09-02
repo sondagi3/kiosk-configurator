@@ -1,6 +1,6 @@
 // src/lib/admin.js
 
-/** EXISTING corporate defaults (kept so older parts of the app continue to work) */
+/** Corporate defaults (unchanged) */
 export const DEFAULT_ADMIN = {
   orgName: "Brand M3dia",
   display: {
@@ -35,18 +35,10 @@ export const DEFAULT_ADMIN = {
   warranty: { noSubstitutions: true, years: 2 },
   customFields: [],
 
-  /** NEW: Alibaba option catalog used by the enhanced Spec form */
+  // NEW: Alibaba catalog used by the enhanced spec
   alibaba: {
     screenSizes: [
-      '21.5" FHD',
-      '32" FHD',
-      '43" FHD',
-      '43" 4K',
-      '49" 4K',
-      '55" 4K',
-      '65" 4K',
-      '75" 4K',
-      '86" 4K',
+      '21.5" FHD', '32" FHD', '43" FHD', '43" 4K', '49" 4K', '55" 4K', '65" 4K', '75" 4K', '86" 4K',
     ],
     panelBrandTiers: ["Standard (BOE/Innolux/etc.)", "Premium (LG/Samsung)"],
     brightnessTiers: ["300–350", "500–550", "1000+", "1500–2000"],
@@ -59,26 +51,14 @@ export const DEFAULT_ADMIN = {
     storageOptions: ["32GB eMMC", "64GB eMMC", "128GB eMMC", "256GB SSD", "512GB SSD", "1TB SSD"],
 
     portsDefaults: {
-      usb2: 2,
-      usb3: 2,
-      rj45: 1,
-      hdmiIn: 1,
-      hdmiOut: 1,
-      serial: 1,
-      audio: 1,
-      wifi: "Dual-band (2.4/5GHz)",
-      bluetooth: "5.0",
+      usb2: 2, usb3: 2, rj45: 1, hdmiIn: 1, hdmiOut: 1, serial: 1, audio: 1,
+      wifi: "Dual-band (2.4/5GHz)", bluetooth: "5.0",
     },
 
     peripherals: {
       paymentId: [
-        "RFID (125k/13.56MHz)",
-        "NFC Reader",
-        "EMV Credit Card Pin Pad",
-        "Bill/Coin Acceptor",
-        "Barcode/QR Scanner",
-        "Face Recognition Camera",
-        "Fingerprint Scanner",
+        "RFID (125k/13.56MHz)", "NFC Reader", "EMV Credit Card Pin Pad",
+        "Bill/Coin Acceptor", "Barcode/QR Scanner", "Face Recognition Camera", "Fingerprint Scanner",
       ],
       printing: ["Thermal 58mm", "Ticket 80mm", "Label Printer"],
       cameras: ["Internal 2MP", "External 1080p", "5MP", "8MP"],
@@ -101,25 +81,23 @@ export const DEFAULT_ADMIN = {
   },
 };
 
-/** Build the old (flat) spec + the new Alibaba nested spec */
 export function defaultAlibabaFromAdmin(admin = DEFAULT_ADMIN) {
-  const a = admin.alibaba;
+  // Robust fallback: if an older admin (from localStorage) lacks .alibaba, use DEFAULT_ADMIN.alibaba
+  const a = (admin && admin.alibaba) ? admin.alibaba : DEFAULT_ADMIN.alibaba;
+
   return {
-    // Section 1: Display & Touch
-    screenSize: a.screenSizes[2] || "43\" FHD",
+    screenSize: a.screenSizes[2] || '43" FHD',
     panelBrandTier: a.panelBrandTiers[0],
     brightnessTier: a.brightnessTiers[1] || "500–550",
     touchTech: a.touchTech[0],
     touchGlass: ["4mm Tempered"],
 
-    // Section 2: Compute
     os: a.osOptions[0],
     cpu: a.cpuOptions[1] || "RK3566",
     ram: a.ramOptions[1] || "4GB",
     storage: a.storageOptions[1] || "64GB eMMC",
     gpuRequired: false,
 
-    // Section 3: Ports & Connectivity
     ports: {
       usb2: a.portsDefaults.usb2,
       usb3: a.portsDefaults.usb3,
@@ -136,7 +114,6 @@ export function defaultAlibabaFromAdmin(admin = DEFAULT_ADMIN) {
       gpioRequired: false,
     },
 
-    // Section 4: Peripherals & Add-Ons
     peripherals: {
       paymentId: [],
       printing: [],
@@ -145,7 +122,6 @@ export function defaultAlibabaFromAdmin(admin = DEFAULT_ADMIN) {
       other: ["VESA Mount"],
     },
 
-    // Section 5: Enclosure & Design
     enclosure: {
       material: "Aluminum + Steel",
       finish: "Brushed Silver",
@@ -155,18 +131,14 @@ export function defaultAlibabaFromAdmin(admin = DEFAULT_ADMIN) {
       branding: "No Logos",
     },
 
-    // Section 6: Software, Warranty, Logistics
     software: { cms: "No software", kioskLockdown: true },
     warranty: { years: 1, onSiteService: false, spareTouchGlass: 0, sparePowerAdapter: 0 },
     logistics: { shipping: "FOB", sampleUnit: true },
-
-    // Section 7: Certifications
     certifications: ["CE", "FCC", "RoHS"],
   };
 }
 
 export function defaultSpecFromAdmin(admin = DEFAULT_ADMIN) {
-  // Keep your original flat spec (used elsewhere in the app)
   const base = {
     displayBrand: admin.display.allowedBrands[0] || "",
     size: admin.display.sizeOptions[3] || admin.display.sizeOptions[0] || "",
@@ -201,16 +173,16 @@ export function defaultSpecFromAdmin(admin = DEFAULT_ADMIN) {
     peripherals: ["mic", "speaker", "webcam", "qr"],
   };
 
-  // Add the Alibaba nested spec
+  // Add robust nested spec
   base.alibaba = defaultAlibabaFromAdmin(admin);
   return base;
 }
 
 export function clampSpecToAdmin(spec, admin = DEFAULT_ADMIN) {
   const s = { ...spec };
-
-  // ---- Existing clamp rules (kept) ----
   const clamp = (arr, val) => (arr.includes(val) ? val : (arr[0] || ""));
+
+  // existing clamps...
   if (!admin.display.allowedBrands.includes(s.displayBrand)) s.displayBrand = admin.display.allowedBrands[0] || "";
   if (!admin.display.sizeOptions.includes(s.size)) s.size = admin.display.sizeOptions[0] || "";
   if (!admin.display.resolutionOptions.includes(s.resolution)) s.resolution = admin.display.resolutionOptions[0] || "";
@@ -235,21 +207,22 @@ export function clampSpecToAdmin(spec, admin = DEFAULT_ADMIN) {
   s.noSubstitutions = admin.warranty.noSubstitutions ? "Yes" : "No";
   s.warrantyYears = String(admin.warranty.years);
 
-  // ---- NEW: clamp Alibaba nested spec ----
-  const A = admin.alibaba;
+  // NEW: clamps with safe fallback when admin.alibaba is missing
+  const A = admin.alibaba || DEFAULT_ADMIN.alibaba;
   s.alibaba ||= defaultAlibabaFromAdmin(admin);
 
   const keepIn = (arr, val) => (arr.includes(val) ? val : arr[0]);
+  const keepMany = (arr, vals = []) => vals.filter((v) => arr.includes(v));
 
-  s.alibaba.screenSize = keepIn(A.screenSizes, s.alibaba.screenSize);
-  s.alibaba.panelBrandTier = keepIn(A.panelBrandTiers, s.alibaba.panelBrandTier);
-  s.alibaba.brightnessTier = keepIn(A.brightnessTiers, s.alibaba.brightnessTier);
-  s.alibaba.touchTech = keepIn(A.touchTech, s.alibaba.touchTech);
-  s.alibaba.touchGlass = (s.alibaba.touchGlass || []).filter((g) => A.touchGlassOptions.includes(g));
+  s.alibaba.screenSize       = keepIn(A.screenSizes, s.alibaba.screenSize);
+  s.alibaba.panelBrandTier   = keepIn(A.panelBrandTiers, s.alibaba.panelBrandTier);
+  s.alibaba.brightnessTier   = keepIn(A.brightnessTiers, s.alibaba.brightnessTier);
+  s.alibaba.touchTech        = keepIn(A.touchTech, s.alibaba.touchTech);
+  s.alibaba.touchGlass       = keepMany(A.touchGlassOptions, s.alibaba.touchGlass || []);
 
-  s.alibaba.os = keepIn(A.osOptions, s.alibaba.os);
-  s.alibaba.cpu = keepIn(A.cpuOptions, s.alibaba.cpu);
-  s.alibaba.ram = keepIn(A.ramOptions, s.alibaba.ram);
+  s.alibaba.os      = keepIn(A.osOptions, s.alibaba.os);
+  s.alibaba.cpu     = keepIn(A.cpuOptions, s.alibaba.cpu);
+  s.alibaba.ram     = keepIn(A.ramOptions, s.alibaba.ram);
   s.alibaba.storage = keepIn(A.storageOptions, s.alibaba.storage);
   s.alibaba.gpuRequired = !!s.alibaba.gpuRequired;
 
@@ -270,33 +243,33 @@ export function clampSpecToAdmin(spec, admin = DEFAULT_ADMIN) {
     gpioRequired: !!p.gpioRequired,
   };
 
-  const keepMany = (arr, vals = []) => vals.filter((v) => arr.includes(v));
   s.alibaba.peripherals = {
     paymentId: keepMany(A.peripherals.paymentId, s.alibaba.peripherals?.paymentId),
-    printing: keepMany(A.peripherals.printing, s.alibaba.peripherals?.printing),
-    cameras: keepMany(A.peripherals.cameras, s.alibaba.peripherals?.cameras),
-    audio: keepMany(A.peripherals.audio, s.alibaba.peripherals?.audio),
-    other: keepMany(A.peripherals.other, s.alibaba.peripherals?.other),
+    printing:  keepMany(A.peripherals.printing,  s.alibaba.peripherals?.printing),
+    cameras:   keepMany(A.peripherals.cameras,   s.alibaba.peripherals?.cameras),
+    audio:     keepMany(A.peripherals.audio,     s.alibaba.peripherals?.audio),
+    other:     keepMany(A.peripherals.other,     s.alibaba.peripherals?.other),
   };
 
   const e = s.alibaba.enclosure || {};
   s.alibaba.enclosure = {
-    material: keepIn(A.enclosure.materials, e.material || A.enclosure.materials[0]),
-    finish: keepIn(A.enclosure.finishes, e.finish || A.enclosure.finishes[0]),
+    material: keepIn(A.enclosure.materials,   e.material || A.enclosure.materials[0]),
+    finish:   keepIn(A.enclosure.finishes,    e.finish   || A.enclosure.finishes[0]),
     customRal: e.customRal || "",
-    base: keepIn(A.enclosure.baseOptions, e.base || A.enclosure.baseOptions[0]),
-    ipRating: keepIn(A.enclosure.ipRatings, e.ipRating || A.enclosure.ipRatings[0]),
-    branding: keepIn(A.enclosure.branding, e.branding || A.enclosure.branding[0]),
+    base:     keepIn(A.enclosure.baseOptions, e.base     || A.enclosure.baseOptions[0]),
+    ipRating: keepIn(A.enclosure.ipRatings,   e.ipRating || A.enclosure.ipRatings[0]),
+    branding: keepIn(A.enclosure.branding,    e.branding || A.enclosure.branding[0]),
   };
 
+  const soft = s.alibaba.software || {};
   s.alibaba.software = {
-    cms: keepIn(admin.alibaba.softwareOptions, s.alibaba.software?.cms || admin.alibaba.softwareOptions[0]),
-    kioskLockdown: !!(s.alibaba.software?.kioskLockdown ?? true),
+    cms: (A.softwareOptions.includes(soft.cms) ? soft.cms : A.softwareOptions[0]),
+    kioskLockdown: !!(soft.kioskLockdown ?? true),
   };
 
   const w = s.alibaba.warranty || {};
   s.alibaba.warranty = {
-    years: admin.alibaba.warrantyYears.includes(w.years) ? w.years : admin.alibaba.warrantyYears[0],
+    years: (A.warrantyYears.includes(w.years) ? w.years : A.warrantyYears[0]),
     onSiteService: !!w.onSiteService,
     spareTouchGlass: Math.max(0, +w.spareTouchGlass || 0),
     sparePowerAdapter: Math.max(0, +w.sparePowerAdapter || 0),
@@ -304,11 +277,10 @@ export function clampSpecToAdmin(spec, admin = DEFAULT_ADMIN) {
 
   const l = s.alibaba.logistics || {};
   s.alibaba.logistics = {
-    shipping: keepIn(admin.alibaba.shippingTerms, l.shipping || admin.alibaba.shippingTerms[0]),
+    shipping: (A.shippingTerms.includes(l.shipping) ? l.shipping : A.shippingTerms[0]),
     sampleUnit: !!(l.sampleUnit ?? true),
   };
 
-  s.alibaba.certifications = keepMany(admin.alibaba.certifications, s.alibaba.certifications || []);
-
+  s.alibaba.certifications = keepMany(A.certifications, s.alibaba.certifications || []);
   return s;
 }
