@@ -27,7 +27,7 @@ export const Text = ({ value, onChange, type = "text", placeholder, list }) => (
     type={type}
     placeholder={placeholder}
     list={list}
-    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
   />
 );
 
@@ -36,7 +36,7 @@ export const Select = ({ value, onChange, options }) => (
     <select
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-2.5 pr-10 text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+      className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-2.5 pr-10 text-gray-800 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
     >
       {options.map((opt) => (
         <option key={opt} value={opt}>
@@ -47,3 +47,32 @@ export const Select = ({ value, onChange, options }) => (
     <ChevronDown className="pointer-events-none absolute right-3 top-2.5 h-5 w-5 text-gray-500" />
   </div>
 );
+
+/** Simple checkbox */
+export const Checkbox = ({ checked, onChange, label }) => (
+  <label className="inline-flex items-center gap-2 text-sm text-gray-800">
+    <input
+      type="checkbox"
+      checked={!!checked}
+      onChange={(e) => onChange(e.target.checked)}
+      className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+    />
+    <span>{label}</span>
+  </label>
+);
+
+/** Multi checkbox group bound to a string[] */
+export const CheckGroup = ({ options, value = [], onChange }) => {
+  const toggle = (opt) => {
+    const has = value.includes(opt);
+    const next = has ? value.filter((v) => v !== opt) : [...value, opt];
+    onChange(next);
+  };
+  return (
+    <div className="flex flex-col gap-1">
+      {options.map((opt) => (
+        <Checkbox key={opt} checked={value.includes(opt)} onChange={() => toggle(opt)} label={opt} />
+      ))}
+    </div>
+  );
+};
