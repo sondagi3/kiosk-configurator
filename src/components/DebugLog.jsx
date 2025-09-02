@@ -36,7 +36,7 @@ export default function DebugLog({ open, onClose }) {
           <div className="flex items-center gap-2">
             <button onClick={copy} className="rounded border px-3 py-1.5 text-sm">Copy</button>
             <button onClick={clearAll} className="rounded border px-3 py-1.5 text-sm">Clear</button>
-            <button onClick={onClose} className="rounded bg-brand-600 px-3 py-1.5 text-sm text-white">Close</button>
+            <button onClick={onClose} className="rounded bg-red-600 px-3 py-1.5 text-sm text-white">Close</button>
           </div>
         </div>
         <div className="max-h-[60vh] overflow-auto rounded border bg-gray-50 p-2 text-xs">

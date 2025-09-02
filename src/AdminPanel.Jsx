@@ -92,7 +92,7 @@ export default function AdminPanel({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "brand-m3dia-admin-spec.json";
+    a.download = "redbrand-m3dia-admin-spec.json";
     a.click();
     URL.revokeObjectURL(url);
   };

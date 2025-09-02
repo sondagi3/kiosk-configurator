@@ -68,8 +68,8 @@ export default function App() {
   useEffect(() => { lsSet(LS_ADMIN, admin); }, [admin]);
   useEffect(() => { saveOrder(order); }, [order]);
 
-  let defaultLogo = "/brand-logo.png";
-  try { defaultLogo = new URL("/brand-logo.png", import.meta.url).pathname; } catch { defaultLogo = "/brand-logo.png"; }
+  let defaultLogo = "/redlogo.png";
+  try { defaultLogo = new URL("/redlogo.png", import.meta.url).pathname; } catch { defaultLogo = "/redlogo.png"; }
   const headerLogo = admin?.logoUrl || defaultLogo;
 
   function exportOrder() {
@@ -129,7 +129,7 @@ export default function App() {
     saveOrder(fresh);
   }
   function factoryReset() {
-    const ok = confirm("Factory Reset will erase all Brand M3dia local data on this browser (admin, orders, debug log) and reload. Continue?");
+    const ok = confirm("Factory Reset will erase all Brand brand-m3dia local data on this browser (admin, orders, debug log) and reload. Continue?");
     if (!ok) return;
     try {
       Object.keys(localStorage).forEach((k) => { if (k.startsWith("bm3_")) localStorage.removeItem(k); });
@@ -144,11 +144,11 @@ export default function App() {
       <header className="sticky top-0 z-20 border-b bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
-            <img src={headerLogo} alt={admin.orgName || "Brand M3dia"} className="h-8 w-auto" />
-            <h1 className="text-2xl font-bold text-gray-900">{admin.orgName || "Brand M3dia"} — Kiosk Orders</h1>
+            <img src={headerLogo} alt={admin.orgName || "Brand brand-m3dia"} className="h-8 w-auto" />
+            <h1 className="text-2xl font-bold text-gray-900">{admin.orgName || "Brand brand-m3dia"} — Kiosk Orders</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={exportOrder} className="inline-flex items-center gap-2 rounded-lg border border-brand-600 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50">
+            <button onClick={exportOrder} className="inline-flex items-center gap-2 rounded-lg border border-red600 px-3 py-2 text-sm font-medium text-red700 hover:bg-red50">
               <Download className="h-4 w-4" /> Export Order
             </button>
             <button onClick={importOrder} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium">

@@ -23,7 +23,7 @@ export default function StatusRibbon({ order }) {
               key={s}
               className={
                 "rounded-full px-2.5 py-1 text-xs " +
-                (active ? "bg-brand-50 text-brand-700 border border-brand-600" : "bg-gray-100 text-gray-700 border border-gray-200")
+                (active ? "bg-red50 text-red700 border border-red600" : "bg-gray-100 text-gray-700 border border-gray-200")
               }
             >
               {s}

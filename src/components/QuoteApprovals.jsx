@@ -91,7 +91,7 @@ export default function QuoteApprovals({ order, setOrder, admin }) {
         <button
           disabled={!canQuote}
           onClick={generateQuote}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 hover:bg-brand-700"
+          className="inline-flex items-center gap-2 rounded-lg bg-red600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 hover:bg-red700"
           title={canQuote ? "Generate vendor-style line items & totals" : "Enter Client Name in Client Intake"}
           type="button"
         >
@@ -102,7 +102,7 @@ export default function QuoteApprovals({ order, setOrder, admin }) {
         <button
           disabled={!q}
           onClick={() => printQuote({ ...order }, admin)}
-          className="inline-flex items-center gap-2 rounded-lg border border-brand-600 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg border border-red600 px-3 py-2 text-sm font-medium text-red700 hover:bg-red50 disabled:opacity-50"
           title={q ? "Open printable quotation" : "Generate a quote first"}
           type="button"
         >

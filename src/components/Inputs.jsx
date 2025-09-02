@@ -27,7 +27,7 @@ export const Text = ({ value, onChange, type = "text", placeholder, list }) => (
     type={type}
     placeholder={placeholder}
     list={list}
-    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm focus:border-red500 focus:outline-none focus:ring-2 focus:ring-red200"
   />
 );
 
@@ -36,7 +36,7 @@ export const Select = ({ value, onChange, options }) => (
     <select
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-2.5 pr-10 text-gray-800 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+      className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-2.5 pr-10 text-gray-800 shadow-sm focus:border-red500 focus:outline-none focus:ring-2 focus:ring-red200"
     >
       {options.map((opt) => (
         <option key={opt} value={opt}>
@@ -55,7 +55,7 @@ export const Checkbox = ({ checked, onChange, label }) => (
       type="checkbox"
       checked={!!checked}
       onChange={(e) => onChange(e.target.checked)}
-      className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+      className="h-4 w-4 rounded border-gray-300 text-red600 focus:ring-red500"
     />
     <span>{label}</span>
   </label>

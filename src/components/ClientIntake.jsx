@@ -24,7 +24,7 @@ export default function ClientIntake({ order, setOrder, pastClients = [] }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "brand-m3dia-clients.csv";
+    a.download = "redbrand-m3dia-clients.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -33,7 +33,7 @@ export default function ClientIntake({ order, setOrder, pastClients = [] }) {
   const listId = "past-clients";
 
   return (
-    <Section title="Client Intake" icon={<span className="inline-block h-6 w-6 rounded bg-brand-600" />}>
+    <Section title="Client Intake" icon={<span className="inline-block h-6 w-6 rounded bg-red-600" />}>
       <datalist id={listId}>
         {pastClients.map((n) => <option key={n} value={n} />)}
       </datalist>
@@ -66,13 +66,13 @@ export default function ClientIntake({ order, setOrder, pastClients = [] }) {
       <div className="md:col-span-2 flex flex-wrap items-center gap-2">
         <button
           onClick={() => saveClientName(order.client?.clientName)}
-          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
         >
           Save Client Name
         </button>
         <button
           onClick={exportClientsCSV}
-          className="rounded-lg border border-brand-600 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
+          className="rounded-lg border border-red-600 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
         >
           Export Clients CSV
         </button>

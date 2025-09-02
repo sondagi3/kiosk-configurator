@@ -2,7 +2,7 @@
 
 /** Corporate defaults (unchanged) */
 export const DEFAULT_ADMIN = {
-  orgName: "Brand M3dia",
+  orgName: "Brand brand-m3dia",
   display: {
     allowedBrands: ["LG", "Samsung"],
     sizeOptions: ["32-inch", "43-inch", "49-inch", "55-inch", "65-inch", "75-inch"],
@@ -151,7 +151,7 @@ export function defaultSpecFromAdmin(admin = DEFAULT_ADMIN) {
     touchType: admin.touch.types[0] || "",
     enclosureType: "Wall-mount",
     color: "Black",
-    logoText: "Brand M3dia",
+    logoText: "Brand brand-m3dia",
 
     labelsProvided: admin.docs.labels ? "Yes" : "No",
     manualProvided: admin.docs.manual ? "Yes" : "No",
