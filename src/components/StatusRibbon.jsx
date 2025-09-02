@@ -2,15 +2,37 @@
 import React from "react";
 
 export default function StatusRibbon({ order }) {
+  const status = order?.status || "INTAKE";
+  const steps = [
+    "INTAKE",
+    "QUOTE_SENT",
+    "CLIENT_ACCEPTED",
+    "CEO_APPROVED",
+    "VENDOR_ORDERED",
+    "FULFILLED",
+  ];
+  const idx = Math.max(0, steps.indexOf(status));
+
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-3 text-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-semibold">Order ID:</span> {order.orderId}
-        <span className="mx-2 h-4 w-px bg-gray-300" />
-        <span className="font-semibold">Status:</span>{" "}
-        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">{order.status}</span>
-        <span className="mx-2 h-4 w-px bg-gray-300" />
-        <span className="text-gray-500">Updated: {new Date(order.updatedAt).toLocaleString()}</span>
+        {steps.map((s, i) => {
+          const active = i <= idx;
+          return (
+            <span
+              key={s}
+              className={
+                "rounded-full px-2.5 py-1 text-xs " +
+                (active ? "bg-brand-50 text-brand-700 border border-brand-600" : "bg-gray-100 text-gray-700 border border-gray-200")
+              }
+            >
+              {s}
+            </span>
+          );
+        })}
+      </div>
+      <div className="mt-2 text-xs text-gray-500">
+        Audit records: {(order?.audit && Array.isArray(order.audit)) ? order.audit.length : 0}
       </div>
     </div>
   );
