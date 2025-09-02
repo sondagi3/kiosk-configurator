@@ -1,176 +1,271 @@
 // src/components/SpecForm.jsx
-import React from "react";
-import { Monitor } from "lucide-react";
-import { Section, Field, Text, Select } from "./Inputs.jsx";
+import React, { useEffect } from "react";
+import { Monitor, Cpu, Network, Layers, Factory, Shield, PackageOpen } from "lucide-react";
+import { Section, Field, Text, Select, Checkbox, CheckGroup } from "./Inputs.jsx";
 import { nowISO } from "../lib/utils.js";
+import { defaultAlibabaFromAdmin } from "../lib/admin.js";
 
 export default function SpecForm({ order, setOrder, admin }) {
-  return (
-    <Section title="Specification" icon={<Monitor className="h-6 w-6 text-gray-800" />}>
-      <Field label="Brand">
-        <Select value={order.spec.displayBrand}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, displayBrand: v }, updatedAt: nowISO() }))}
-          options={admin.display.allowedBrands} />
-      </Field>
-      <Field label="Size">
-        <Select value={order.spec.size}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, size: v }, updatedAt: nowISO() }))}
-          options={admin.display.sizeOptions} />
-      </Field>
-      <Field label="Resolution">
-        <Select value={order.spec.resolution}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, resolution: v }, updatedAt: nowISO() }))}
-          options={admin.display.resolutionOptions} />
-      </Field>
-      <Field label="Brightness (nits)">
-        <Text type="number" value={order.spec.brightness}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, brightness: v }, updatedAt: nowISO() }))} />
-      </Field>
-      <Field label="Contrast">
-        <Text type="number" value={order.spec.contrast}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, contrast: v }, updatedAt: nowISO() }))} />
-      </Field>
-      <Field label="Compute Spec">
-        <Select value={order.spec.cpuRam}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, cpuRam: v }, updatedAt: nowISO() }))}
-          options={admin.pc.cpuOptions} />
-      </Field>
-      <Field label="Operating System">
-        <Select value={order.spec.os}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, os: v }, updatedAt: nowISO() }))}
-          options={admin.pc.osOptions} />
-      </Field>
-      <Field label="Has Touch">
-        <Select value={order.spec.hasTouch}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, hasTouch: v }, updatedAt: nowISO() }))}
-          options={["Yes", "No"]} />
-      </Field>
-      {order.spec.hasTouch === "Yes" && (
-        <Field label="Touch Type">
-          <Select value={order.spec.touchType}
-            onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, touchType: v }, updatedAt: nowISO() }))}
-            options={admin.touch.types} />
-        </Field>
-      )}
+  // Ensure the new nested object exists so controlled inputs don't jump
+  useEffect(() => {
+    if (!order.spec.alibaba) {
+      const defaults = defaultAlibabaFromAdmin(admin);
+      setOrder((o) => ({ ...o, spec: { ...o.spec, alibaba: defaults }, updatedAt: nowISO() }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      <Field label="Enclosure Type">
-        <Text value={order.spec.enclosureType}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, enclosureType: v }, updatedAt: nowISO() }))} />
-      </Field>
-      <Field label="Color">
-        <Text value={order.spec.color}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, color: v }, updatedAt: nowISO() }))} />
-      </Field>
-      <Field label="Logo Text">
-        <Text value={order.spec.logoText}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, logoText: v }, updatedAt: nowISO() }))} />
+  const a = order.spec.alibaba || defaultAlibabaFromAdmin(admin);
+  const up = (patch) =>
+    setOrder((o) => ({ ...o, spec: { ...o.spec, alibaba: { ...a, ...patch } }, updatedAt: nowISO() }));
+
+  // ---------- Section 1: Core Display & Touchscreen ----------
+  const S1 = (
+    <Section title="Core Display & Touchscreen (Alibaba Edition)" icon={<Monitor className="h-6 w-6 text-gray-800" />}>
+      <Field label="1.1 Screen Size & Resolution">
+        <Select value={a.screenSize} onChange={(v) => up({ screenSize: v })} options={admin.alibaba.screenSizes} />
       </Field>
 
-      <Field label="Camera Model">
-        <Select value={order.spec.cameraModel}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, cameraModel: v }, updatedAt: nowISO() }))}
-          options={admin.peripherals.cameras} />
-      </Field>
-      <Field label="Microphone Model">
-        <Select value={order.spec.micModel}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, micModel: v }, updatedAt: nowISO() }))}
-          options={admin.peripherals.mics} />
-      </Field>
-      <Field label="Speaker Option">
-        <Select value={order.spec.speakerModel}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, speakerModel: v }, updatedAt: nowISO() }))}
-          options={admin.peripherals.speakers} />
-      </Field>
-      <Field label="QR Scanner Model">
-        <Select value={order.spec.qrModel}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, qrModel: v }, updatedAt: nowISO() }))}
-          options={admin.peripherals.qrScanners} />
-      </Field>
-      <Field label="Badge Printer Model">
-        <Select value={order.spec.badgePrinterModel}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, badgePrinterModel: v }, updatedAt: nowISO() }))}
-          options={admin.peripherals.badgePrinters} />
-      </Field>
-      <Field label="Wall Mount">
-        <Select value={order.spec.wallMount}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, wallMount: v }, updatedAt: nowISO() }))}
-          options={admin.peripherals.wallMounts} />
+      <Field label="1.2 Panel Brand Tier">
+        <Select value={a.panelBrandTier} onChange={(v) => up({ panelBrandTier: v })} options={admin.alibaba.panelBrandTiers} />
       </Field>
 
-      <Field label="Grouped Peripherals">
-        <div className="flex flex-wrap gap-2">
-          {["mic", "speaker", "webcam", "qr"].map((k) => {
-            const active = order.spec.peripherals.includes(k);
-            return (
-              <button
-                key={k}
-                type="button"
-                onClick={() =>
-                  setOrder((o) => {
-                    const per = o.spec.peripherals;
-                    const next = active ? per.filter((x) => x !== k) : [...per, k];
-                    return { ...o, spec: { ...o.spec, peripherals: next }, updatedAt: nowISO() };
-                  })
-                }
-                className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm ${
-                  active ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700"
-                }`}
-              >
-                {active ? "✓" : null}
-                {k}
-              </button>
-            );
-          })}
-        </div>
+      <Field label="1.3 Brightness (nits)">
+        <Select value={a.brightnessTier} onChange={(v) => up({ brightnessTier: v })} options={admin.alibaba.brightnessTiers} />
       </Field>
 
-      <Field label="Labels Provided">
-        <Select value={order.spec.labelsProvided}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, labelsProvided: v }, updatedAt: nowISO() }))}
-          options={["Yes", "No"]} />
+      <Field label="1.4 Touch Technology">
+        <Select value={a.touchTech} onChange={(v) => up({ touchTech: v })} options={admin.alibaba.touchTech} />
       </Field>
-      <Field label="Manual Provided">
-        <Select value={order.spec.manualProvided}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, manualProvided: v }, updatedAt: nowISO() }))}
-          options={["Yes", "No"]} />
-      </Field>
-      <Field label="Proof Before Ship">
-        <Select value={order.spec.proofBeforeShip}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, proofBeforeShip: v }, updatedAt: nowISO() }))}
-          options={["Yes", "No"]} />
-      </Field>
-      <Field label="Visual Proof">
-        <Select value={order.spec.visualProof}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, visualProof: v }, updatedAt: nowISO() }))}
-          options={["Yes", "No"]} />
-      </Field>
-      <Field label="Packaging">
-        <Select value={order.spec.packaging}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, packaging: v }, updatedAt: nowISO() }))}
-          options={admin.docs.packagingOptions} />
-      </Field>
-      <Field label="Certifications (comma-separated)">
-        <Text value={order.spec.certifications}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, certifications: v }, updatedAt: nowISO() }))} />
-      </Field>
-      <Field label="Origin Country">
-        <Text value={order.spec.originCountry}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, originCountry: v }, updatedAt: nowISO() }))} />
-      </Field>
-      <Field label="Canadian Wiring Colors">
-        <Select value={order.spec.canadIanWireColors}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, canadIanWireColors: v }, updatedAt: nowISO() }))}
-          options={["Yes", "No"]} />
-      </Field>
-      <Field label="No Substitutions">
-        <Select value={order.spec.noSubstitutions}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, noSubstitutions: v }, updatedAt: nowISO() }))}
-          options={["Yes", "No"]} />
-      </Field>
-      <Field label="Warranty Years">
-        <Text type="number" value={order.spec.warrantyYears}
-          onChange={(v) => setOrder((o) => ({ ...o, spec: { ...o.spec, warrantyYears: v }, updatedAt: nowISO() }))} />
+
+      <Field label="1.5 Touch Glass (multi-select)">
+        <CheckGroup
+          value={a.touchGlass}
+          onChange={(arr) => up({ touchGlass: arr })}
+          options={admin.alibaba.touchGlassOptions}
+        />
       </Field>
     </Section>
+  );
+
+  // ---------- Section 2: Computing Hardware ----------
+  const S2 = (
+    <Section title="Computing Hardware" icon={<Cpu className="h-6 w-6 text-gray-800" />}>
+      <Field label="2.1 Operating System">
+        <Select value={a.os} onChange={(v) => up({ os: v })} options={admin.alibaba.osOptions} />
+      </Field>
+
+      <Field label="2.2 Processor (CPU)">
+        <Select value={a.cpu} onChange={(v) => up({ cpu: v })} options={admin.alibaba.cpuOptions} />
+      </Field>
+
+      <Field label="2.3 Memory (RAM)">
+        <Select value={a.ram} onChange={(v) => up({ ram: v })} options={admin.alibaba.ramOptions} />
+      </Field>
+
+      <Field label="2.4 Internal Storage">
+        <Select value={a.storage} onChange={(v) => up({ storage: v })} options={admin.alibaba.storageOptions} />
+      </Field>
+
+      <Field label="2.5 Dedicated GPU Required?">
+        <Checkbox checked={a.gpuRequired} onChange={(b) => up({ gpuRequired: b })} label="Yes, requires dedicated GPU" />
+      </Field>
+    </Section>
+  );
+
+  // ---------- Section 3: Ports & Connectivity ----------
+  const ports = a.ports || admin.alibaba.portsDefaults;
+  const updPorts = (p) => up({ ports: { ...ports, ...p } });
+
+  const S3 = (
+    <Section title="Ports & Connectivity" icon={<Network className="h-6 w-6 text-gray-800" />}>
+      <Field label="USB 2.0 (qty)">
+        <Text type="number" value={String(ports.usb2)} onChange={(v) => updPorts({ usb2: Math.max(0, +v || 0) })} />
+      </Field>
+      <Field label="USB 3.0 (qty)">
+        <Text type="number" value={String(ports.usb3)} onChange={(v) => updPorts({ usb3: Math.max(0, +v || 0) })} />
+      </Field>
+      <Field label="RJ45 LAN (qty)">
+        <Text type="number" value={String(ports.rj45)} onChange={(v) => updPorts({ rj45: Math.max(0, +v || 0) })} />
+      </Field>
+      <Field label="Add second LAN port">
+        <Checkbox checked={ports.addSecondLan} onChange={(b) => updPorts({ addSecondLan: b })} label="Yes" />
+      </Field>
+
+      <Field label="HDMI-IN (qty)">
+        <Text type="number" value={String(ports.hdmiIn)} onChange={(v) => updPorts({ hdmiIn: Math.max(0, +v || 0) })} />
+      </Field>
+      <Field label="HDMI-OUT (qty)">
+        <Text type="number" value={String(ports.hdmiOut)} onChange={(v) => updPorts({ hdmiOut: Math.max(0, +v || 0) })} />
+      </Field>
+
+      <Field label="Serial (COM/RS232) (qty)">
+        <Text type="number" value={String(ports.serial)} onChange={(v) => updPorts({ serial: Math.max(0, +v || 0) })} />
+      </Field>
+      <Field label="Add second serial port">
+        <Checkbox checked={ports.addSecondSerial} onChange={(b) => updPorts({ addSecondSerial: b })} label="Yes" />
+      </Field>
+
+      <Field label="Audio Jack (qty)">
+        <Text type="number" value={String(ports.audio)} onChange={(v) => updPorts({ audio: Math.max(0, +v || 0) })} />
+      </Field>
+      <Field label="Wi-Fi">
+        <Text value={ports.wifi} onChange={(v) => updPorts({ wifi: v })} placeholder="Dual-band (2.4/5GHz)" />
+      </Field>
+      <Field label="Bluetooth">
+        <Text value={ports.bluetooth} onChange={(v) => updPorts({ bluetooth: v })} placeholder="5.0" />
+      </Field>
+
+      <Field label="4G/LTE Module">
+        <Checkbox checked={ports.lteModule} onChange={(b) => updPorts({ lteModule: b })} label="Include internal module" />
+      </Field>
+      <Field label="GPIO Ports">
+        <Checkbox checked={ports.gpioRequired} onChange={(b) => updPorts({ gpioRequired: b })} label="Required for custom triggers/buttons" />
+      </Field>
+    </Section>
+  );
+
+  // ---------- Section 4: Peripherals & Add-Ons ----------
+  const per = a.peripherals || {};
+  const updPer = (p) => up({ peripherals: { ...per, ...p } });
+
+  const S4 = (
+    <Section title="Peripherals & Add-Ons" icon={<Layers className="h-6 w-6 text-gray-800" />}>
+      <Field label="4.1 Payment & ID">
+        <CheckGroup value={per.paymentId || []} onChange={(arr) => updPer({ paymentId: arr })} options={admin.alibaba.peripherals.paymentId} />
+      </Field>
+      <Field label="4.2 Printing">
+        <CheckGroup value={per.printing || []} onChange={(arr) => updPer({ printing: arr })} options={admin.alibaba.peripherals.printing} />
+      </Field>
+      <Field label="4.3 Cameras">
+        <CheckGroup value={per.cameras || []} onChange={(arr) => updPer({ cameras: arr })} options={admin.alibaba.peripherals.cameras} />
+      </Field>
+      <Field label="4.4 Audio">
+        <CheckGroup value={per.audio || []} onChange={(arr) => updPer({ audio: arr })} options={admin.alibaba.peripherals.audio} />
+      </Field>
+      <Field label="4.5 Other Hardware">
+        <CheckGroup value={per.other || []} onChange={(arr) => updPer({ other: arr })} options={admin.alibaba.peripherals.other} />
+      </Field>
+    </Section>
+  );
+
+  // ---------- Section 5: Enclosure & Design ----------
+  const enc = a.enclosure || {};
+  const updEnc = (p) => up({ enclosure: { ...enc, ...p } });
+
+  const S5 = (
+    <Section title="Enclosure & Design" icon={<Factory className="h-6 w-6 text-gray-800" />}>
+      <Field label="5.1 Material">
+        <Select value={enc.material || ""} onChange={(v) => updEnc({ material: v })} options={admin.alibaba.enclosure.materials} />
+      </Field>
+      <Field label="5.2 Color / Finish">
+        <Select value={enc.finish || ""} onChange={(v) => updEnc({ finish: v })} options={admin.alibaba.enclosure.finishes} />
+      </Field>
+      {enc.finish === "Custom RAL" ? (
+        <Field label="Custom RAL Code">
+          <Text value={enc.customRal || ""} onChange={(v) => updEnc({ customRal: v })} placeholder="e.g., RAL 3020" />
+        </Field>
+      ) : null}
+      <Field label="5.3 Mounting Base">
+        <Select value={enc.base || ""} onChange={(v) => updEnc({ base: v })} options={admin.alibaba.enclosure.baseOptions} />
+      </Field>
+      <Field label="5.4 IP Rating">
+        <Select value={enc.ipRating || ""} onChange={(v) => updEnc({ ipRating: v })} options={admin.alibaba.enclosure.ipRatings} />
+      </Field>
+      <Field label="5.5 Branding">
+        <Select value={enc.branding || ""} onChange={(v) => updEnc({ branding: v })} options={admin.alibaba.enclosure.branding} />
+      </Field>
+    </Section>
+  );
+
+  // ---------- Section 6: Software, Warranty & Logistics ----------
+  const soft = a.software || {};
+  const war = a.warranty || {};
+  const logi = a.logistics || {};
+
+  const S6 = (
+    <Section title="Software, Warranty & Logistics" icon={<PackageOpen className="h-6 w-6 text-gray-800" />}>
+      <Field label="6.1 CMS Software">
+        <Select value={soft.cms || ""} onChange={(v) => up({ software: { ...soft, cms: v } })} options={admin.alibaba.softwareOptions} />
+      </Field>
+      <Field label="6.2 Kiosk Lockdown">
+        <Checkbox
+          checked={!!soft.kioskLockdown}
+          onChange={(b) => up({ software: { ...soft, kioskLockdown: b } })}
+          label="Yes, enable kiosk mode"
+        />
+      </Field>
+
+      <Field label="6.3 Warranty">
+        <Select
+          value={String(war.years ?? 1)}
+          onChange={(v) => up({ warranty: { ...war, years: Number(v) || 1 } })}
+          options={admin.alibaba.warrantyYears.map((n) => String(n))}
+        />
+      </Field>
+      <Field label="On-site service required?">
+        <Checkbox
+          checked={!!war.onSiteService}
+          onChange={(b) => up({ warranty: { ...war, onSiteService: b } })}
+          label="Yes, include on-site service"
+        />
+      </Field>
+
+      <Field label="6.4 Spare Parts – Touch Glass (qty)">
+        <Text
+          type="number"
+          value={String(war.spareTouchGlass ?? 0)}
+          onChange={(v) => up({ warranty: { ...war, spareTouchGlass: Math.max(0, +v || 0) } })}
+        />
+      </Field>
+      <Field label="6.4 Spare Parts – Power Adapter (qty)">
+        <Text
+          type="number"
+          value={String(war.sparePowerAdapter ?? 0)}
+          onChange={(v) => up({ warranty: { ...war, sparePowerAdapter: Math.max(0, +v || 0) } })}
+        />
+      </Field>
+
+      <Field label="6.5 Shipping Terms">
+        <Select value={logi.shipping || ""} onChange={(v) => up({ logistics: { ...logi, shipping: v } })} options={admin.alibaba.shippingTerms} />
+      </Field>
+      <Field label="6.6 Sample Unit">
+        <Checkbox
+          checked={!!logi.sampleUnit}
+          onChange={(b) => up({ logistics: { ...logi, sampleUnit: b } })}
+          label="Yes, require a sample unit first"
+        />
+      </Field>
+    </Section>
+  );
+
+  // ---------- Section 7: Certification & Compliance ----------
+  const S7 = (
+    <Section title="Certification & Compliance" icon={<Shield className="h-6 w-6 text-gray-800" />}>
+      <Field label="Certificates required (attach copies when available)">
+        <CheckGroup
+          value={a.certifications || []}
+          onChange={(arr) => up({ certifications: arr })}
+          options={admin.alibaba.certifications}
+        />
+      </Field>
+      <div className="md:col-span-2 text-xs text-gray-600">
+        CE (EU), FCC (USA), RoHS (EU), and ISO 9001:2015 (factory) are common import requirements.
+      </div>
+    </Section>
+  );
+
+  return (
+    <>
+      {/* ORIGINAL short corporate spec is still shown above this component by App.jsx.
+          This Alibaba Edition augments detail inside order.spec.alibaba */}
+      {S1}
+      {S2}
+      {S3}
+      {S4}
+      {S5}
+      {S6}
+      {S7}
+    </>
   );
 }
