@@ -68,8 +68,8 @@ export default function App() {
   useEffect(() => { lsSet(LS_ADMIN, admin); }, [admin]);
   useEffect(() => { saveOrder(order); }, [order]);
 
-  let defaultLogo = "/redlogo.png";
-  try { defaultLogo = new URL("/redlogo.png", import.meta.url).pathname; } catch { defaultLogo = "/redlogo.png"; }
+  let defaultLogo = "/redbrand-logo.png";
+  try { defaultLogo = new URL("/redbrand-logo.png", import.meta.url).pathname; } catch { defaultLogo = "/redbrand-logo.png"; }
   const headerLogo = admin?.logoUrl || defaultLogo;
 
   function exportOrder() {
