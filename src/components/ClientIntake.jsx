@@ -1,84 +1,81 @@
 // src/components/ClientIntake.jsx
 import React from "react";
-import { Building2 } from "lucide-react";
 import { Section, Field, Text } from "./Inputs.jsx";
 import { nowISO } from "../lib/utils.js";
 
-export default function ClientIntake({ order, setOrder, clientHistory, saveClientToHistory }) {
+export default function ClientIntake({ order, setOrder, pastClients = [] }) {
+  const c = order.client || {};
+  const up = (patch) => setOrder((o) => ({ ...o, client: { ...o.client, ...patch }, updatedAt: nowISO() }));
+
+  function saveClientName(name) {
+    const key = "bm3_client_names";
+    const list = JSON.parse(localStorage.getItem(key) || "[]");
+    if (name && !list.includes(name)) {
+      list.push(name);
+      localStorage.setItem(key, JSON.stringify(list));
+    }
+  }
+
+  function exportClientsCSV() {
+    const key = "bm3_client_names";
+    const list = JSON.parse(localStorage.getItem(key) || "[]");
+    const csv = "Client Name\n" + list.map((n) => `"${(n || "").replace(/"/g, '""')}"`).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "brand-m3dia-clients.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // datalist id
+  const listId = "past-clients";
+
   return (
-    <Section title="Client Intake" icon={<Building2 className="h-6 w-6 text-gray-800" />}>
-      <datalist id="clientNames">
-        {clientHistory.map((n) => (
-          <option key={n} value={n} />
-        ))}
+    <Section title="Client Intake" icon={<span className="inline-block h-6 w-6 rounded bg-brand-600" />}>
+      <datalist id={listId}>
+        {pastClients.map((n) => <option key={n} value={n} />)}
       </datalist>
 
-      <Field label="Client Name (required)">
-        <div className="flex gap-2">
-          <Text
-            value={order.client.clientName}
-            onChange={(v) => setOrder((o) => ({ ...o, client: { ...o.client, clientName: v }, updatedAt: nowISO() }))}
-            list="clientNames"
-            placeholder="Start typing to see past clients…"
-          />
-          <button
-            type="button"
-            onClick={() => saveClientToHistory(order.client.clientName)}
-            className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
-          >
-            Save Name
-          </button>
-        </div>
+      <Field label="Client Name">
+        <Text value={c.clientName || ""} onChange={(v) => up({ clientName: v })} placeholder="e.g., Acme Corp" list={listId} />
       </Field>
       <Field label="Company">
-        <Text value={order.client.company}
-          onChange={(v) => setOrder((o) => ({ ...o, client: { ...o.client, company: v }, updatedAt: nowISO() }))} />
+        <Text value={c.company || ""} onChange={(v) => up({ company: v })} placeholder="Legal company name" />
       </Field>
       <Field label="Email">
-        <Text type="email" value={order.client.email}
-          onChange={(v) => setOrder((o) => ({ ...o, client: { ...o.client, email: v }, updatedAt: nowISO() }))} />
+        <Text value={c.email || ""} onChange={(v) => up({ email: v })} placeholder="name@company.com" />
       </Field>
       <Field label="Phone">
-        <Text value={order.client.phone}
-          onChange={(v) => setOrder((o) => ({ ...o, client: { ...o.client, phone: v }, updatedAt: nowISO() }))} />
+        <Text value={c.phone || ""} onChange={(v) => up({ phone: v })} placeholder="+1 ..." />
       </Field>
       <Field label="Billing Address">
-        <Text value={order.client.billingAddress}
-          onChange={(v) => setOrder((o) => ({ ...o, client: { ...o.client, billingAddress: v }, updatedAt: nowISO() }))} />
+        <Text value={c.billingAddress || ""} onChange={(v) => up({ billingAddress: v })} placeholder="Street, City, State, ZIP, Country" />
       </Field>
       <Field label="Shipping Address">
-        <Text value={order.client.shippingAddress}
-          onChange={(v) => setOrder((o) => ({ ...o, client: { ...o.client, shippingAddress: v }, updatedAt: nowISO() }))} />
+        <Text value={c.shippingAddress || ""} onChange={(v) => up({ shippingAddress: v })} placeholder="Street, City, State, ZIP, Country" />
       </Field>
       <Field label="Project Name">
-        <Text value={order.client.projectName}
-          onChange={(v) => setOrder((o) => ({ ...o, client: { ...o.client, projectName: v }, updatedAt: nowISO() }))} />
+        <Text value={c.projectName || ""} onChange={(v) => up({ projectName: v })} placeholder="e.g., Lobby Wayfinding" />
       </Field>
-      <Field label="Notes">
-        <Text value={order.client.notes}
-          onChange={(v) => setOrder((o) => ({ ...o, client: { ...o.client, notes: v }, updatedAt: nowISO() }))} />
+      <Field label="Notes (optional)">
+        <Text value={c.notes || ""} onChange={(v) => up({ notes: v })} placeholder="Special requirements, deadlines…" />
       </Field>
 
-      <div className="md:col-span-2">
-        <div className="rounded-xl border bg-gray-50 p-3 text-xs text-gray-700">
-          <div className="mb-1 font-semibold">Past Clients</div>
-          <div className="flex flex-wrap gap-2">
-            {clientHistory.length ? (
-              clientHistory.slice(0, 12).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setOrder((o) => ({ ...o, client: { ...o.client, clientName: n }, updatedAt: nowISO() }))}
-                  className="rounded-full border px-2.5 py-1 hover:bg-white"
-                >
-                  {n}
-                </button>
-              ))
-            ) : (
-              <span className="text-gray-500">No past clients yet.</span>
-            )}
-          </div>
-        </div>
+      <div className="md:col-span-2 flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => saveClientName(order.client?.clientName)}
+          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+        >
+          Save Client Name
+        </button>
+        <button
+          onClick={exportClientsCSV}
+          className="rounded-lg border border-brand-600 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
+        >
+          Export Clients CSV
+        </button>
       </div>
     </Section>
   );
