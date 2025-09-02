@@ -1,21 +1,22 @@
 import React, { useEffect, useMemo, useState } from "react";
+import AdminPanel from "./components/AdminPanel.jsx";
 import {
-  Monitor,
-  Cpu,
-  ShoppingCart,
-  Smartphone,
-  Check,
-  ChevronDown,
-  X,
-  Download,
-  Printer,
-  Settings,
-  Plus,
-  Trash2,
-  CreditCard,
-  Building2,
-  Factory,
-  BadgeCheck,
+   Monitor,
+   Cpu,
+   ShoppingCart,
+   Smartphone,
+   Check,
+   ChevronDown,
+   X,
+   Download,
+   Printer,
+   Settings,
+   Plus,
+   Trash2,
+   CreditCard,
+   Save,
+   RefreshCcw,
+   Upload,
 } from "lucide-react";
 
 // Use env var in Vite if provided, else fallback (adjust for production)
@@ -101,6 +102,21 @@ export default function App() {
   };
 
   const [admin, setAdmin] = useState(defaultAdmin);
+  // Load saved admin spec on mount
+React.useEffect(() => {
+  try {
+    const raw = localStorage.getItem("bm3_admin_spec");
+    if (raw) setAdmin(JSON.parse(raw));
+  } catch {}
+}, []);
+
+// Persist admin spec when changed
+React.useEffect(() => {
+  try {
+    localStorage.setItem("bm3_admin_spec", JSON.stringify(admin));
+  } catch {}
+}, [admin]);
+
 
   // ======================= Client Intake =======================
   const initialClient = {
