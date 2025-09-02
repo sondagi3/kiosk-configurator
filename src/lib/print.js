@@ -4,7 +4,7 @@ export function printQuote(order, admin) {
   const q = order.quote;
   const org = admin.orgName || "Brand brand-m3dia";
   const brand = "#dc2626"; // Tailwind red-600 default
-  const logo = "/redbrand-logo.png"; // place your logo in /public
+  const logo = "/brand-logo.png"; // place your logo in /public
 
   const itemsRows = (q?.lineItems || [])
     .map(

@@ -24,7 +24,7 @@ export default function ClientIntake({ order, setOrder, pastClients = [] }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "redbrand-m3dia-clients.csv";
+    a.download = "brand-m3dia-clients.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
