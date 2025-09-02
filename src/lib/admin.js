@@ -1,4 +1,6 @@
 // src/lib/admin.js
+
+/** EXISTING corporate defaults (kept so older parts of the app continue to work) */
 export const DEFAULT_ADMIN = {
   orgName: "Brand M3dia",
   display: {
@@ -32,10 +34,140 @@ export const DEFAULT_ADMIN = {
   },
   warranty: { noSubstitutions: true, years: 2 },
   customFields: [],
+
+  /** NEW: Alibaba option catalog used by the enhanced Spec form */
+  alibaba: {
+    screenSizes: [
+      '21.5" FHD',
+      '32" FHD',
+      '43" FHD',
+      '43" 4K',
+      '49" 4K',
+      '55" 4K',
+      '65" 4K',
+      '75" 4K',
+      '86" 4K',
+    ],
+    panelBrandTiers: ["Standard (BOE/Innolux/etc.)", "Premium (LG/Samsung)"],
+    brightnessTiers: ["300–350", "500–550", "1000+", "1500–2000"],
+    touchTech: ["IR 10-Point", "IR 20-Point", "PCAP"],
+    touchGlassOptions: ["4mm Tempered", "6mm Thick", "Anti-Glare", "Anti-Fingerprint"],
+
+    osOptions: ["Android 12", "Android 13", "Windows 11 Pro", "Dual-Boot (Android + Win)", "No OS"],
+    cpuOptions: ["RK3288", "RK3566", "RK3588", "Intel Celeron J4125", "Intel i3", "Intel i5"],
+    ramOptions: ["2GB", "4GB", "8GB", "16GB"],
+    storageOptions: ["32GB eMMC", "64GB eMMC", "128GB eMMC", "256GB SSD", "512GB SSD", "1TB SSD"],
+
+    portsDefaults: {
+      usb2: 2,
+      usb3: 2,
+      rj45: 1,
+      hdmiIn: 1,
+      hdmiOut: 1,
+      serial: 1,
+      audio: 1,
+      wifi: "Dual-band (2.4/5GHz)",
+      bluetooth: "5.0",
+    },
+
+    peripherals: {
+      paymentId: [
+        "RFID (125k/13.56MHz)",
+        "NFC Reader",
+        "EMV Credit Card Pin Pad",
+        "Bill/Coin Acceptor",
+        "Barcode/QR Scanner",
+        "Face Recognition Camera",
+        "Fingerprint Scanner",
+      ],
+      printing: ["Thermal 58mm", "Ticket 80mm", "Label Printer"],
+      cameras: ["Internal 2MP", "External 1080p", "5MP", "8MP"],
+      audio: ["Internal Speakers 2x10W", "External Speaker Set", "Noise-Canceling Mic Array"],
+      other: ["VESA Mount", "External Button Kit", "Keyboard Drawer"],
+    },
+
+    enclosure: {
+      materials: ["Aluminum + Steel", "Stainless Steel"],
+      finishes: ["Brushed Silver", "Powder-Coated Black", "Powder-Coated White", "Custom RAL"],
+      baseOptions: ["Fixed Weighted Base", "Motorized Height-Adjustable Stand", "Mobile Base (Castors)", "Wall Mount"],
+      ipRatings: ["IP20", "IP54", "IP65"],
+      branding: ["No Logos", "Silkscreen Logo", "Laser Engraving"],
+    },
+
+    softwareOptions: ["No software", "Basic Android Signage App", "1-Year Cloud CMS License", "Windows Signage Software"],
+    shippingTerms: ["FOB", "CIF", "DDP", "EXW"],
+    certifications: ["CE", "FCC", "RoHS", "ISO 9001:2015"],
+    warrantyYears: [1, 2, 3],
+  },
 };
 
-export function defaultSpecFromAdmin(admin) {
+/** Build the old (flat) spec + the new Alibaba nested spec */
+export function defaultAlibabaFromAdmin(admin = DEFAULT_ADMIN) {
+  const a = admin.alibaba;
   return {
+    // Section 1: Display & Touch
+    screenSize: a.screenSizes[2] || "43\" FHD",
+    panelBrandTier: a.panelBrandTiers[0],
+    brightnessTier: a.brightnessTiers[1] || "500–550",
+    touchTech: a.touchTech[0],
+    touchGlass: ["4mm Tempered"],
+
+    // Section 2: Compute
+    os: a.osOptions[0],
+    cpu: a.cpuOptions[1] || "RK3566",
+    ram: a.ramOptions[1] || "4GB",
+    storage: a.storageOptions[1] || "64GB eMMC",
+    gpuRequired: false,
+
+    // Section 3: Ports & Connectivity
+    ports: {
+      usb2: a.portsDefaults.usb2,
+      usb3: a.portsDefaults.usb3,
+      rj45: a.portsDefaults.rj45,
+      addSecondLan: false,
+      hdmiIn: a.portsDefaults.hdmiIn,
+      hdmiOut: a.portsDefaults.hdmiOut,
+      serial: a.portsDefaults.serial,
+      addSecondSerial: false,
+      audio: a.portsDefaults.audio,
+      wifi: a.portsDefaults.wifi,
+      bluetooth: a.portsDefaults.bluetooth,
+      lteModule: false,
+      gpioRequired: false,
+    },
+
+    // Section 4: Peripherals & Add-Ons
+    peripherals: {
+      paymentId: [],
+      printing: [],
+      cameras: ["Internal 2MP"],
+      audio: ["Internal Speakers 2x10W"],
+      other: ["VESA Mount"],
+    },
+
+    // Section 5: Enclosure & Design
+    enclosure: {
+      material: "Aluminum + Steel",
+      finish: "Brushed Silver",
+      customRal: "",
+      base: "Fixed Weighted Base",
+      ipRating: "IP20",
+      branding: "No Logos",
+    },
+
+    // Section 6: Software, Warranty, Logistics
+    software: { cms: "No software", kioskLockdown: true },
+    warranty: { years: 1, onSiteService: false, spareTouchGlass: 0, sparePowerAdapter: 0 },
+    logistics: { shipping: "FOB", sampleUnit: true },
+
+    // Section 7: Certifications
+    certifications: ["CE", "FCC", "RoHS"],
+  };
+}
+
+export function defaultSpecFromAdmin(admin = DEFAULT_ADMIN) {
+  // Keep your original flat spec (used elsewhere in the app)
+  const base = {
     displayBrand: admin.display.allowedBrands[0] || "",
     size: admin.display.sizeOptions[3] || admin.display.sizeOptions[0] || "",
     resolution: admin.display.resolutionOptions[0] || "",
@@ -48,6 +180,7 @@ export function defaultSpecFromAdmin(admin) {
     enclosureType: "Wall-mount",
     color: "Black",
     logoText: "Brand M3dia",
+
     labelsProvided: admin.docs.labels ? "Yes" : "No",
     manualProvided: admin.docs.manual ? "Yes" : "No",
     proofBeforeShip: admin.docs.proofBeforeShip ? "Yes" : "No",
@@ -58,6 +191,7 @@ export function defaultSpecFromAdmin(admin) {
     canadIanWireColors: admin.docs.requireCanadianWiringColors ? "Yes" : "No",
     noSubstitutions: admin.warranty.noSubstitutions ? "Yes" : "No",
     warrantyYears: String(admin.warranty.years),
+
     cameraModel: admin.peripherals.cameras[0] || "",
     micModel: admin.peripherals.mics[0] || "",
     speakerModel: admin.peripherals.speakers[0] || "",
@@ -66,10 +200,16 @@ export function defaultSpecFromAdmin(admin) {
     wallMount: admin.peripherals.wallMounts[0] || "",
     peripherals: ["mic", "speaker", "webcam", "qr"],
   };
+
+  // Add the Alibaba nested spec
+  base.alibaba = defaultAlibabaFromAdmin(admin);
+  return base;
 }
 
-export function clampSpecToAdmin(spec, admin) {
+export function clampSpecToAdmin(spec, admin = DEFAULT_ADMIN) {
   const s = { ...spec };
+
+  // ---- Existing clamp rules (kept) ----
   const clamp = (arr, val) => (arr.includes(val) ? val : (arr[0] || ""));
   if (!admin.display.allowedBrands.includes(s.displayBrand)) s.displayBrand = admin.display.allowedBrands[0] || "";
   if (!admin.display.sizeOptions.includes(s.size)) s.size = admin.display.sizeOptions[0] || "";
@@ -94,5 +234,81 @@ export function clampSpecToAdmin(spec, admin) {
   s.canadIanWireColors = admin.docs.requireCanadianWiringColors ? "Yes" : "No";
   s.noSubstitutions = admin.warranty.noSubstitutions ? "Yes" : "No";
   s.warrantyYears = String(admin.warranty.years);
+
+  // ---- NEW: clamp Alibaba nested spec ----
+  const A = admin.alibaba;
+  s.alibaba ||= defaultAlibabaFromAdmin(admin);
+
+  const keepIn = (arr, val) => (arr.includes(val) ? val : arr[0]);
+
+  s.alibaba.screenSize = keepIn(A.screenSizes, s.alibaba.screenSize);
+  s.alibaba.panelBrandTier = keepIn(A.panelBrandTiers, s.alibaba.panelBrandTier);
+  s.alibaba.brightnessTier = keepIn(A.brightnessTiers, s.alibaba.brightnessTier);
+  s.alibaba.touchTech = keepIn(A.touchTech, s.alibaba.touchTech);
+  s.alibaba.touchGlass = (s.alibaba.touchGlass || []).filter((g) => A.touchGlassOptions.includes(g));
+
+  s.alibaba.os = keepIn(A.osOptions, s.alibaba.os);
+  s.alibaba.cpu = keepIn(A.cpuOptions, s.alibaba.cpu);
+  s.alibaba.ram = keepIn(A.ramOptions, s.alibaba.ram);
+  s.alibaba.storage = keepIn(A.storageOptions, s.alibaba.storage);
+  s.alibaba.gpuRequired = !!s.alibaba.gpuRequired;
+
+  const p = s.alibaba.ports || {};
+  s.alibaba.ports = {
+    usb2: Math.max(0, Number.isFinite(+p.usb2) ? +p.usb2 : A.portsDefaults.usb2),
+    usb3: Math.max(0, Number.isFinite(+p.usb3) ? +p.usb3 : A.portsDefaults.usb3),
+    rj45: Math.max(0, Number.isFinite(+p.rj45) ? +p.rj45 : A.portsDefaults.rj45),
+    addSecondLan: !!p.addSecondLan,
+    hdmiIn: Math.max(0, Number.isFinite(+p.hdmiIn) ? +p.hdmiIn : A.portsDefaults.hdmiIn),
+    hdmiOut: Math.max(0, Number.isFinite(+p.hdmiOut) ? +p.hdmiOut : A.portsDefaults.hdmiOut),
+    serial: Math.max(0, Number.isFinite(+p.serial) ? +p.serial : A.portsDefaults.serial),
+    addSecondSerial: !!p.addSecondSerial,
+    audio: Math.max(0, Number.isFinite(+p.audio) ? +p.audio : A.portsDefaults.audio),
+    wifi: p.wifi || A.portsDefaults.wifi,
+    bluetooth: p.bluetooth || A.portsDefaults.bluetooth,
+    lteModule: !!p.lteModule,
+    gpioRequired: !!p.gpioRequired,
+  };
+
+  const keepMany = (arr, vals = []) => vals.filter((v) => arr.includes(v));
+  s.alibaba.peripherals = {
+    paymentId: keepMany(A.peripherals.paymentId, s.alibaba.peripherals?.paymentId),
+    printing: keepMany(A.peripherals.printing, s.alibaba.peripherals?.printing),
+    cameras: keepMany(A.peripherals.cameras, s.alibaba.peripherals?.cameras),
+    audio: keepMany(A.peripherals.audio, s.alibaba.peripherals?.audio),
+    other: keepMany(A.peripherals.other, s.alibaba.peripherals?.other),
+  };
+
+  const e = s.alibaba.enclosure || {};
+  s.alibaba.enclosure = {
+    material: keepIn(A.enclosure.materials, e.material || A.enclosure.materials[0]),
+    finish: keepIn(A.enclosure.finishes, e.finish || A.enclosure.finishes[0]),
+    customRal: e.customRal || "",
+    base: keepIn(A.enclosure.baseOptions, e.base || A.enclosure.baseOptions[0]),
+    ipRating: keepIn(A.enclosure.ipRatings, e.ipRating || A.enclosure.ipRatings[0]),
+    branding: keepIn(A.enclosure.branding, e.branding || A.enclosure.branding[0]),
+  };
+
+  s.alibaba.software = {
+    cms: keepIn(admin.alibaba.softwareOptions, s.alibaba.software?.cms || admin.alibaba.softwareOptions[0]),
+    kioskLockdown: !!(s.alibaba.software?.kioskLockdown ?? true),
+  };
+
+  const w = s.alibaba.warranty || {};
+  s.alibaba.warranty = {
+    years: admin.alibaba.warrantyYears.includes(w.years) ? w.years : admin.alibaba.warrantyYears[0],
+    onSiteService: !!w.onSiteService,
+    spareTouchGlass: Math.max(0, +w.spareTouchGlass || 0),
+    sparePowerAdapter: Math.max(0, +w.sparePowerAdapter || 0),
+  };
+
+  const l = s.alibaba.logistics || {};
+  s.alibaba.logistics = {
+    shipping: keepIn(admin.alibaba.shippingTerms, l.shipping || admin.alibaba.shippingTerms[0]),
+    sampleUnit: !!(l.sampleUnit ?? true),
+  };
+
+  s.alibaba.certifications = keepMany(admin.alibaba.certifications, s.alibaba.certifications || []);
+
   return s;
 }
