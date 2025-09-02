@@ -1,85 +1,122 @@
 // src/components/QuoteApprovals.jsx
-import React from "react";
-import { BadgeCheck } from "lucide-react";
+import React, { useState } from "react";
+import { Calculator, CheckCircle2, Stamp, Printer } from "lucide-react";
 import { Section, Field, Text } from "./Inputs.jsx";
+import { estimateQuoteFromAlibaba } from "../lib/pricing.js";
+import { printQuote } from "../lib/print.js";
+import { nowISO } from "../lib/utils.js";
+import { round2 } from "../lib/pricing.js";
 
-export default function QuoteApprovals({
-  order,
-  canAdvanceToQuote,
-  canAccept,
-  canCEOApprove,
-  onGenerateQuote,
-  onClientAccept,
-  onCEOApprove,
-  setOrder,
-}) {
+export default function QuoteApprovals({ order, setOrder, admin }) {
+  const [busy, setBusy] = useState(false);
+  const q = order.quote;
+
+  const canQuote = !!order.client?.clientName;
+
+  async function generateQuote() {
+    setBusy(true);
+    try {
+      // prefer Alibaba spec; fall back to legacy
+      const alibaba = order.spec?.alibaba;
+      const quote = estimateQuoteFromAlibaba(alibaba, admin.alibaba);
+      setOrder((o) => ({
+        ...o,
+        quote,
+        status: "QUOTE_SENT",
+        updatedAt: nowISO(),
+        audit: [
+          ...(o.audit || []),
+          { at: nowISO(), by: "system", action: "QUOTE_GENERATED", detail: `Total ${quote.currency} ${quote.total}` },
+        ],
+      }));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function clientAccept() {
+    const who = order.client?.clientName || "Client";
+    setOrder((o) => ({
+      ...o,
+      status: "CLIENT_ACCEPTED",
+      clientAcceptance: { acceptedBy: who, acceptedAt: nowISO() },
+      updatedAt: nowISO(),
+      audit: [...(o.audit || []), { at: nowISO(), by: who, action: "CLIENT_ACCEPTED", detail: "" }],
+    }));
+  }
+
+  function ceoApprove(name) {
+    if (!name) return;
+    setOrder((o) => ({
+      ...o,
+      status: "CEO_APPROVED",
+      ceoApproval: { approvedBy: name, approvedAt: nowISO(), comment: "" },
+      updatedAt: nowISO(),
+      audit: [...(o.audit || []), { at: nowISO(), by: name, action: "CEO_APPROVED", detail: "" }],
+    }));
+  }
+
   return (
-    <Section title="Quote & Approvals" icon={<BadgeCheck className="h-6 w-6 text-gray-800" />}>
-      <Field label="Generate Quote" hint="Uses vendor estimator if available, else local heuristic.">
+    <Section title="Quote & Approvals" icon={<Calculator className="h-6 w-6 text-gray-800" />}>
+      <div className="md:col-span-2 flex flex-wrap items-center gap-2">
         <button
-          type="button"
-          disabled={!canAdvanceToQuote}
-          onClick={onGenerateQuote}
-          className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          disabled={!canQuote || busy}
+          onClick={generateQuote}
+          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 hover:bg-brand-700"
         >
           Generate Quote
         </button>
-      </Field>
 
-      <div className="md:col-span-2">
-        <div className="rounded-lg border bg-gray-50 p-3 text-sm">
-          {order.quote ? <pre className="whitespace-pre-wrap">{JSON.stringify(order.quote, null, 2)}</pre> : "No quote yet."}
-        </div>
+        <button
+          disabled={!q}
+          onClick={() => printQuote({ ...order }, admin)}
+          className="inline-flex items-center gap-2 rounded-lg border border-brand-600 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50"
+        >
+          <Printer className="h-4 w-4" /> Print Quote
+        </button>
+
+        <button
+          disabled={!q}
+          onClick={clientAccept}
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          <CheckCircle2 className="h-4 w-4" /> Mark Client Accepted
+        </button>
       </div>
 
-      <Field label="Client Acceptance">
-        <button
-          type="button"
-          disabled={!canAccept}
-          onClick={onClientAccept}
-          className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow hover:bg-gray-50 disabled:opacity-50"
-        >
-          Mark Client Accepted
-        </button>
-        {order.clientAcceptance ? (
-          <p className="mt-2 text-xs text-gray-600">
-            Accepted by {order.clientAcceptance.acceptedBy} at {new Date(order.clientAcceptance.acceptedAt).toLocaleString()}
-          </p>
-        ) : null}
-      </Field>
-
-      <Field label="CEO Approval">
+      {/* CEO Approval */}
+      <Field label="CEO Approval (enter name to approve)">
         <div className="flex gap-2">
-          <Text
-            placeholder="CEO name"
-            value={order.ceoApproval?.approvedBy}
-            onChange={(v) =>
-              setOrder((o) => ({ ...o, ceoApproval: { approvedBy: v, approvedAt: o.ceoApproval?.approvedAt || "", comment: o.ceoApproval?.comment || "" } }))
-            }
-          />
-          <Text
-            placeholder="Approval note (optional)"
-            value={order.ceoApproval?.comment}
-            onChange={(v) =>
-              setOrder((o) => ({ ...o, ceoApproval: { approvedBy: o.ceoApproval?.approvedBy || "", approvedAt: o.ceoApproval?.approvedAt || "", comment: v } }))
-            }
-          />
+          <Text value={order.ceoApproval?.approvedBy || ""} onChange={(v) =>
+            setOrder((o) => ({ ...o, ceoApproval: { ...(o.ceoApproval || {}), approvedBy: v }, updatedAt: nowISO() }))
+          } placeholder="CEO Name" />
           <button
-            type="button"
-            disabled={!canCEOApprove}
-            onClick={() => onCEOApprove(order.ceoApproval?.approvedBy || "CEO", order.ceoApproval?.comment || "")}
-            className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow hover:bg-gray-50 disabled:opacity-50"
+            onClick={() => ceoApprove(order.ceoApproval?.approvedBy)}
+            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
-            CEO Approve
+            <Stamp className="h-4 w-4" /> CEO Approve
           </button>
         </div>
-        {order.status === "CEO_APPROVED" ? (
-          <p className="mt-2 text-xs text-gray-600">
-            Approved by {order.ceoApproval?.approvedBy} at {new Date(order.ceoApproval?.approvedAt || Date.now()).toLocaleString()}{" "}
-            {order.ceoApproval?.comment ? `— ${order.ceoApproval?.comment}` : ""}
-          </p>
-        ) : null}
       </Field>
+
+      {/* Quote summary */}
+      <div className="md:col-span-2 rounded-xl border border-gray-200 p-3">
+        <div className="font-semibold mb-1">Current Quote</div>
+        {q ? (
+          <div className="text-sm text-gray-800">
+            <div>Items: {q.lineItems.length}</div>
+            <div>Subtotal: {fmt(q.subtotal, q.currency)} | Shipping: {fmt(q.shipping, q.currency)} | Tax: {fmt(q.tax, q.currency)}</div>
+            <div className="font-semibold">Total: {fmt(q.total, q.currency)}</div>
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500">No quote generated yet.</div>
+        )}
+      </div>
     </Section>
   );
+}
+
+function fmt(n, cur = "USD") {
+  try { return new Intl.NumberFormat(undefined, { style: "currency", currency: cur }).format(Number(n || 0)); }
+  catch { return `$${Number(n || 0).toFixed(2)}`; }
 }
