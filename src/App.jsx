@@ -10,7 +10,7 @@ import VendorFulfillment from "./components/VendorFulfillment.jsx";
 import PaymentRecord from "./components/PaymentRecord.jsx";
 import AuditTrail from "./components/AuditTrail.jsx";
 import StatusRibbon from "./components/StatusRibbon.jsx";
-import { DEFAULT_ADMIN, defaultSpecFromAdmin, clampSpecToAdmin } from "./lib/admin.js";
+import { DEFAULT_ADMIN, defaultSpecFromAdmin } from "./lib/admin.js";
 import { nowISO, uuid } from "./lib/utils.js";
 import { initGlobalErrorHandlers, logInfo } from "./lib/log.js";
 import { normalizeOrderShape } from "./lib/normalize.js";
@@ -68,7 +68,7 @@ export default function App() {
   useEffect(() => { lsSet(LS_ADMIN, admin); }, [admin]);
   useEffect(() => { saveOrder(order); }, [order]);
 
-  // Safe logo path
+  // Safe logo path with fallback
   let defaultLogo = "/brand-logo.png";
   try {
     defaultLogo = new URL("/brand-logo.png", import.meta.url).pathname;
@@ -111,7 +111,7 @@ export default function App() {
 
   function newOrder(adminObj = admin) {
     const id = uuid();
-    const base = {
+    return {
       orderId: id,
       status: "INTAKE",
       client: {},
@@ -126,13 +126,14 @@ export default function App() {
       createdAt: nowISO(),
       updatedAt: nowISO(),
     };
-    return base;
   }
+
   function startNewOrder() {
     const fresh = normalizeOrderShape(newOrder(admin), admin);
     setOrder(fresh);
     saveOrder(fresh);
   }
+
   function factoryReset() {
     const ok = confirm(
       "Factory Reset will erase all Brand M3dia local data on this browser (admin, orders, debug log) and reload. Continue?"

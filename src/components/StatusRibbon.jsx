@@ -3,14 +3,7 @@ import React from "react";
 
 export default function StatusRibbon({ order }) {
   const status = order?.status || "INTAKE";
-  const steps = [
-    "INTAKE",
-    "QUOTE_SENT",
-    "CLIENT_ACCEPTED",
-    "CEO_APPROVED",
-    "VENDOR_ORDERED",
-    "FULFILLED",
-  ];
+  const steps = ["INTAKE", "QUOTE_SENT", "CLIENT_ACCEPTED", "CEO_APPROVED", "VENDOR_ORDERED", "FULFILLED"];
   const idx = Math.max(0, steps.indexOf(status));
 
   return (
@@ -23,7 +16,9 @@ export default function StatusRibbon({ order }) {
               key={s}
               className={
                 "rounded-full px-2.5 py-1 text-xs " +
-                (active ? "bg-red50 text-red700 border border-red600" : "bg-gray-100 text-gray-700 border border-gray-200")
+                (active
+                  ? "bg-red-50 text-red-700 border border-red-600"
+                  : "bg-gray-100 text-gray-700 border border-gray-200")
               }
             >
               {s}

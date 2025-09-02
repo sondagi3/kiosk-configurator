@@ -1,3 +1,4 @@
+// src/components/QuoteApprovals.jsx
 import React, { useMemo, useState, useEffect } from "react";
 import { Calculator, CheckCircle2, Stamp, Printer, User, DollarSign } from "lucide-react";
 import { Section, Field, Text } from "./Inputs.jsx";
@@ -16,12 +17,7 @@ export default function QuoteApprovals({ order, setOrder, admin }) {
   const canQuote = clientNameReady && !busy;
 
   useEffect(() => {
-    logInfo("QuoteApprovals: gating state", {
-      clientName,
-      clientNameReady,
-      busy,
-      canQuote,
-    });
+    logInfo("QuoteApprovals: gating state", { clientName, clientNameReady, busy, canQuote });
   }, [clientName, clientNameReady, busy, canQuote]);
 
   async function generateQuote() {
@@ -35,10 +31,7 @@ export default function QuoteApprovals({ order, setOrder, admin }) {
         quote,
         status: "QUOTE_SENT",
         updatedAt: nowISO(),
-        audit: [
-          ...(o.audit || []),
-          { at: nowISO(), by: "system", action: "QUOTE_GENERATED", detail: `Total ${quote.currency} ${quote.total}` },
-        ],
+        audit: [...(o.audit || []), { at: nowISO(), by: "system", action: "QUOTE_GENERATED", detail: `Total ${quote.currency} ${quote.total}` }],
       }));
     } finally {
       setBusy(false);
@@ -78,31 +71,29 @@ export default function QuoteApprovals({ order, setOrder, admin }) {
           {clientNameReady ? (
             <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700">{clientName.trim()}</span>
           ) : (
-            <span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">
-              (not set — fill “Client Name” in Client Intake)
-            </span>
+            <span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">(not set — fill “Client Name” in Client Intake)</span>
           )}
         </span>
       </div>
 
       {/* Buttons row */}
       <div className="md:col-span-2 flex flex-wrap items-center gap-2">
-        {/* ✅ Generate Quote — this is the one you were missing */}
-       <button
-  disabled={!canQuote}
-  onClick={generateQuote}
-  type="button"
-  className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium
-             text-white hover:bg-red-700 disabled:opacity-50"
-  title={canQuote ? "Generate vendor-style line items & totals" : "Enter Client Name in Client Intake"}
->
-  Generate Quote
-</button>
+        {/* Visible red Generate Quote */}
+        <button
+          disabled={!canQuote}
+          onClick={generateQuote}
+          type="button"
+          className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          title={canQuote ? "Generate vendor-style line items & totals" : "Enter Client Name in Client Intake"}
+        >
+          <DollarSign className="h-4 w-4" />
+          Generate Quote
+        </button>
 
         <button
           disabled={!q}
           onClick={() => printQuote({ ...order }, admin)}
-          className="inline-flex items-center gap-2 rounded-lg border border-red600 px-3 py-2 text-sm font-medium text-red700 hover:bg-red50 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg border border-red-600 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
           title={q ? "Open printable quotation" : "Generate a quote first"}
           type="button"
         >
@@ -120,7 +111,6 @@ export default function QuoteApprovals({ order, setOrder, admin }) {
         </button>
       </div>
 
-      {/* If disabled, tell the user why */}
       {!clientNameReady && (
         <div className="md:col-span-2 mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
           To generate a quote, please enter the <strong>Client Name</strong> in the <strong>Client Intake</strong> section.
