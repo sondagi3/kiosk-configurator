@@ -5,7 +5,6 @@ import { Section, Field, Text } from "./Inputs.jsx";
 import { estimateQuoteFromAlibaba } from "../lib/pricing.js";
 import { printQuote } from "../lib/print.js";
 import { nowISO } from "../lib/utils.js";
-import { round2 } from "../lib/pricing.js";
 
 export default function QuoteApprovals({ order, setOrder, admin }) {
   const [busy, setBusy] = useState(false);
@@ -16,7 +15,6 @@ export default function QuoteApprovals({ order, setOrder, admin }) {
   async function generateQuote() {
     setBusy(true);
     try {
-      // prefer Alibaba spec; fall back to legacy
       const alibaba = order.spec?.alibaba;
       const quote = estimateQuoteFromAlibaba(alibaba, admin.alibaba);
       setOrder((o) => ({
@@ -24,10 +22,7 @@ export default function QuoteApprovals({ order, setOrder, admin }) {
         quote,
         status: "QUOTE_SENT",
         updatedAt: nowISO(),
-        audit: [
-          ...(o.audit || []),
-          { at: nowISO(), by: "system", action: "QUOTE_GENERATED", detail: `Total ${quote.currency} ${quote.total}` },
-        ],
+        audit: [...(o.audit || []), { at: nowISO(), by: "system", action: "QUOTE_GENERATED", detail: `Total ${quote.currency} ${quote.total}` }],
       }));
     } finally {
       setBusy(false);
@@ -87,9 +82,11 @@ export default function QuoteApprovals({ order, setOrder, admin }) {
       {/* CEO Approval */}
       <Field label="CEO Approval (enter name to approve)">
         <div className="flex gap-2">
-          <Text value={order.ceoApproval?.approvedBy || ""} onChange={(v) =>
-            setOrder((o) => ({ ...o, ceoApproval: { ...(o.ceoApproval || {}), approvedBy: v }, updatedAt: nowISO() }))
-          } placeholder="CEO Name" />
+          <Text
+            value={order.ceoApproval?.approvedBy || ""}
+            onChange={(v) => setOrder((o) => ({ ...o, ceoApproval: { ...(o.ceoApproval || {}), approvedBy: v }, updatedAt: nowISO() }))}
+            placeholder="CEO Name"
+          />
           <button
             onClick={() => ceoApprove(order.ceoApproval?.approvedBy)}
             className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
@@ -104,8 +101,10 @@ export default function QuoteApprovals({ order, setOrder, admin }) {
         <div className="font-semibold mb-1">Current Quote</div>
         {q ? (
           <div className="text-sm text-gray-800">
-            <div>Items: {q.lineItems.length}</div>
-            <div>Subtotal: {fmt(q.subtotal, q.currency)} | Shipping: {fmt(q.shipping, q.currency)} | Tax: {fmt(q.tax, q.currency)}</div>
+            <div>Items: {Array.isArray(q.lineItems) ? q.lineItems.length : 0}</div>
+            <div>
+              Subtotal: {fmt(q.subtotal, q.currency)} | Shipping: {fmt(q.shipping, q.currency)} | Tax: {fmt(q.tax, q.currency)}
+            </div>
             <div className="font-semibold">Total: {fmt(q.total, q.currency)}</div>
           </div>
         ) : (
