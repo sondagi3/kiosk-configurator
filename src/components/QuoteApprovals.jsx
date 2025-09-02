@@ -88,16 +88,16 @@ export default function QuoteApprovals({ order, setOrder, admin }) {
       {/* Buttons row */}
       <div className="md:col-span-2 flex flex-wrap items-center gap-2">
         {/* ✅ Generate Quote — this is the one you were missing */}
-        <button
-          disabled={!canQuote}
-          onClick={generateQuote}
-          className="inline-flex items-center gap-2 rounded-lg bg-red600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 hover:bg-red700"
-          title={canQuote ? "Generate vendor-style line items & totals" : "Enter Client Name in Client Intake"}
-          type="button"
-        >
-          <DollarSign className="h-4 w-4" />
-          Generate Quote
-        </button>
+       <button
+  disabled={!canQuote}
+  onClick={generateQuote}
+  type="button"
+  className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium
+             text-white hover:bg-red-700 disabled:opacity-50"
+  title={canQuote ? "Generate vendor-style line items & totals" : "Enter Client Name in Client Intake"}
+>
+  Generate Quote
+</button>
 
         <button
           disabled={!q}
