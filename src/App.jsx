@@ -1,6 +1,6 @@
 // src/App.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { Settings, Download, FileDown, LogOut } from "lucide-react";
+import { Download, FileDown, LogOut } from "lucide-react";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import DebugLog from "./components/DebugLog.jsx";
 import ClientIntake from "./components/ClientIntake.jsx";
@@ -68,8 +68,13 @@ export default function App() {
   useEffect(() => { lsSet(LS_ADMIN, admin); }, [admin]);
   useEffect(() => { saveOrder(order); }, [order]);
 
+  // Safe logo path
   let defaultLogo = "/brand-logo.png";
-  try { defaultLogo = new URL("/brand-logo.png", import.meta.url).pathname; } catch { defaultLogo = "/brand-logo.png"; }
+  try {
+    defaultLogo = new URL("/brand-logo.png", import.meta.url).pathname;
+  } catch {
+    defaultLogo = "/brand-logo.png";
+  }
   const headerLogo = admin?.logoUrl || defaultLogo;
 
   function exportOrder() {
@@ -129,10 +134,14 @@ export default function App() {
     saveOrder(fresh);
   }
   function factoryReset() {
-    const ok = confirm("Factory Reset will erase all Brand brand-m3dia local data on this browser (admin, orders, debug log) and reload. Continue?");
+    const ok = confirm(
+      "Factory Reset will erase all Brand M3dia local data on this browser (admin, orders, debug log) and reload. Continue?"
+    );
     if (!ok) return;
     try {
-      Object.keys(localStorage).forEach((k) => { if (k.startsWith("bm3_")) localStorage.removeItem(k); });
+      Object.keys(localStorage).forEach((k) => {
+        if (k.startsWith("bm3_")) localStorage.removeItem(k);
+      });
     } catch {}
     location.reload();
   }
@@ -144,23 +153,47 @@ export default function App() {
       <header className="sticky top-0 z-20 border-b bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
-            <img src={headerLogo} alt={admin.orgName || "Brand brand-m3dia"} className="h-8 w-auto" />
-            <h1 className="text-2xl font-bold text-gray-900">{admin.orgName || "Brand brand-m3dia"} — Kiosk Orders</h1>
+            <img
+              src={headerLogo}
+              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/brand-logo.png"; }}
+              alt={admin.orgName || "Brand M3dia"}
+              className="h-8 w-auto"
+            />
+            <h1 className="text-2xl font-bold text-gray-900">
+              {admin.orgName || "Brand M3dia"} — Kiosk Orders
+            </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={exportOrder} className="inline-flex items-center gap-2 rounded-lg border border-red600 px-3 py-2 text-sm font-medium text-red700 hover:bg-red50">
+            <button
+              onClick={exportOrder}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-600 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+            >
               <Download className="h-4 w-4" /> Export Order
             </button>
-            <button onClick={importOrder} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium">
+            <button
+              onClick={importOrder}
+              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium"
+            >
               <FileDown className="h-4 w-4" /> Import Order
             </button>
-            <button onClick={() => setShowDebug(true)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium">
+            <button
+              onClick={() => setShowDebug(true)}
+              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium"
+            >
               Debug Log
             </button>
-            <button onClick={startNewOrder} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium" title="Start a fresh order">
+            <button
+              onClick={startNewOrder}
+              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium"
+              title="Start a fresh order"
+            >
               New Order
             </button>
-            <button onClick={factoryReset} className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100" title="Clear all data and reload">
+            <button
+              onClick={factoryReset}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
+              title="Clear all data and reload"
+            >
               <LogOut className="h-4 w-4" /> Factory Reset
             </button>
           </div>
